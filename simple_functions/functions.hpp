@@ -20,5 +20,18 @@ struct int_max{
 };
 
 
+
+template<int v, typename T = unsigned int>
+struct PowerOf2{
+    const static T value = PowerOf2<v - 1, T>::value * static_cast<T>(2);
+};
+template<typename T>
+struct PowerOf2<0, T>{
+    const static T value = 1;
+};
+
+
+
+
 #endif
 
