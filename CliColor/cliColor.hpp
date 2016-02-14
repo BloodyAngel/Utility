@@ -1,6 +1,8 @@
 #ifndef __CLI_COLOR_HPP__
 #define __CLI_COLOR_HPP__
 
+#include <iostream>
+
 // usage example
 //   std::cout << Cli::RED << "my Text in red" << Cli::DEFAULT << std::endl;
 
