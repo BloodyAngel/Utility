@@ -1,3 +1,4 @@
+All Files in directory '3rd_party' have there own license!
 Project License:  WTFPL
 
 
