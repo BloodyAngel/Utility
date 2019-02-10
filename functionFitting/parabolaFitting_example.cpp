@@ -53,7 +53,7 @@ int main() {
     constexpr double b = 2.71;
     constexpr double c = 1.602;
 
-    auto x_values = getRandomXValues();
+    const auto x_values = getRandomXValues();
     auto y_values = getCalculatedYValues(a, b, c, x_values);
     assert(x_values.size() == y_values.size() && !x_values.empty());
 
