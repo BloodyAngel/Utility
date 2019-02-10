@@ -1,55 +1,77 @@
 #pragma once
 
-// return a b c 
-// of the parabola equation a*x² + b*x + c
-template<typename T>
-std::tuple<T, T, T> parabolaFitting(const T* x_values, const T* y_values, size_t dataSize){
+#include <algorithm>
+#include <numeric>
+#include <tuple>
+
+namespace detail {
+    template <typename Type> struct _BaseParameter {
+        size_t numDataPoints = 0;
+
+        Type sum_t1 = 0.0;
+        Type sum_t2 = 0.0;
+        Type sum_t3 = 0.0;
+        Type sum_t4 = 0.0;
+
+        Type sum_dt0 = 0.0;
+        Type sum_dt1 = 0.0;
+        Type sum_dt2 = 0.0;
+    };
+
+    template <typename _ResultType, typename _InputIter0, typename _InputIter1>
+    decltype(auto) _calculateBaseParameter(_InputIter0 begin0, _InputIter0 end0,
+                                           _InputIter1 begin1) {
+        // calculate vector_d (right hand side)
+        // and
+        // calculate stum(t), sum(t^2), sum(t^3) and sum(t^4)
+        _BaseParameter<_ResultType> parameter;
+        std::for_each(begin0, end0, [&parameter, &begin1](_ResultType value) {
+            ++parameter.numDataPoints;
+            const _ResultType temp_y = *begin1++;
+            const _ResultType temp_x = value;
+            const _ResultType temp_x_sq = temp_x * temp_x;
+
+            // calculate right handside (vector_d)
+            parameter.sum_dt0 += temp_y;
+            parameter.sum_dt1 += temp_y * temp_x;
+            parameter.sum_dt2 += temp_y * temp_x_sq;
+
+            // calculate matrix values
+            parameter.sum_t1 += temp_x;
+            parameter.sum_t2 += temp_x_sq;
+            parameter.sum_t3 += temp_x_sq * temp_x;
+            parameter.sum_t4 += temp_x_sq * temp_x_sq;
+        });
+        return parameter;
+    }
+} // namespace detail
+
+// alternative iterator implementation
+template <typename _InputIter0, typename _InputIter1>
+decltype(auto) parabolaFitting(_InputIter0 begin0, _InputIter0 end0,
+                               _InputIter1 begin1) {
+
+    using _ResultType = decltype((*begin0) * (*begin1));
+
     // create parabalo function based on data
-    // link to algorithm:   http://www.personal.psu.edu/jhm/f90/lectures/lsq2.html
+    // link to algorithm: http://www.personal.psu.edu/jhm/f90/lectures/lsq2.html
     // possible implementation (pastebin.com -> license?)
     // http://pastebin.com/tUvKmGPn
     //
     // own implementation, differs from pastebin in last step
-    T sum_t1 = T(0.0);
-    T sum_t2 = T(0.0);
-    T sum_t3 = T(0.0);
-    T sum_t4 = T(0.0);
+    const auto bp =
+        detail::_calculateBaseParameter<_ResultType>(begin0, end0, begin1);
 
-    T sum_dt0 = T(0.0);
-    T sum_dt1 = T(0.0);
-    T sum_dt2 = T(0.0);
-
-    // calculate vector_d (right hand side)
-    // and
-    // calculate stum(t), sum(t^2), sum(t^3) and sum(t^4)
-    for (size_t i = 0; i < dataSize; ++i){
-        T temp_x = x_values[i];
-        T temp_x_sq = temp_x * temp_x;
-
-        T temp_y = y_values[i];
-
-        // calculate right handside (vector_d)
-        sum_dt0 += temp_y;
-        sum_dt1 += temp_y * temp_x;
-        sum_dt2 += temp_y * temp_x_sq;
-
-        // calculate matrix values
-        sum_t1 += temp_x;
-        sum_t2 += temp_x_sq;
-        sum_t3 += temp_x_sq * temp_x;
-        sum_t4 += temp_x_sq * temp_x_sq;
-    }
-
-    T c, b, a;
+    // clang-format off
 
 /* implementation without substitution
-    a = (sum_dt2 - sum_t2 * sum_dt0 / dataSize - (sum_dt1 * dataSize - sum_t1 * sum_dt0) / (sum_t2 * dataSize - sum_t1 * sum_t1) * (sum_t3 - sum_t1 * sum_t2 / dataSize))
+    const T a = (sum_dt2 - sum_t2 * sum_dt0 / dataSize - (sum_dt1 * dataSize - sum_t1 * sum_dt0) / (sum_t2 * dataSize - sum_t1 * sum_t1) * (sum_t3 - sum_t1 * sum_t2 / dataSize))
         /
         ((sum_t1 * sum_t2 - sum_t3 * dataSize) / (sum_t2 * dataSize - sum_t1 * sum_t1) * (sum_t3 - sum_t1 * sum_t2 / dataSize) + sum_t4 - sum_t2 * sum_t2 / dataSize);
 
 
-    b = (sum_dt1 * dataSize - sum_t1 * sum_dt0 + a * (sum_t1 * sum_t2 - sum_t3 * dataSize) ) / (sum_t2 * dataSize - sum_t1 * sum_t1);
-    c = (sum_dt0 - sum_t1 * b - sum_t2 * a) / dataSize;
+    const T b = (sum_dt1 * dataSize - sum_t1 * sum_dt0 + a * (sum_t1 * sum_t2 - sum_t3 * dataSize) ) / (sum_t2 * dataSize - sum_t1 * sum_t1);
+    const T c = (sum_dt0 - sum_t1 * b - sum_t2 * a) / dataSize;
 */
 
     /*
@@ -150,18 +172,18 @@ std::tuple<T, T, T> parabolaFitting(const T* x_values, const T* y_values, size_t
     dt2 = sum of y*x^2,  values from 0 to size-1    (sum_dt2    in this implementation)
     */
 
-    T substition_1 = sum_t2 * dataSize - sum_t1 * sum_t1;
-    T substition_2 = sum_t3 - sum_t1 * sum_t2 / dataSize;
+    const _ResultType dataSize(bp.numDataPoints);
+    const _ResultType substition_1 = bp.sum_t2 * dataSize - bp.sum_t1 * bp.sum_t1;
+    const _ResultType substition_2 = bp.sum_t3 - bp.sum_t1 * bp.sum_t2 / dataSize;
 
+    const _ResultType a = (bp.sum_dt2 - bp.sum_t2 * bp.sum_dt0 / dataSize - ((bp.sum_dt1 * dataSize - bp.sum_t1 * bp.sum_dt0) / substition_1) * substition_2) /
+        (((bp.sum_t1 * bp.sum_t2 - bp.sum_t3 * dataSize) / substition_1) * substition_2 + bp.sum_t4 - bp.sum_t2 * bp.sum_t2 / dataSize);
 
-    a = (sum_dt2 - sum_t2 * sum_dt0 / dataSize - ((sum_dt1 * dataSize - sum_t1 * sum_dt0) / substition_1) * substition_2)
-        /
-        ( ((sum_t1 * sum_t2 - sum_t3 * dataSize) / substition_1) * substition_2 + sum_t4 - sum_t2 * sum_t2 / dataSize);
+    const _ResultType b = (bp.sum_dt1 * dataSize - bp.sum_t1 * bp.sum_dt0 + a * (bp.sum_t1 * bp.sum_t2 - bp.sum_t3 * dataSize)) / substition_1;
 
+    const _ResultType c = (bp.sum_dt0 - bp.sum_t1 * b - bp.sum_t2 * a) / dataSize;
 
-    b = (sum_dt1 * dataSize - sum_t1 * sum_dt0 + a * (sum_t1 * sum_t2 - sum_t3 * dataSize) ) / substition_1;
-    c = (sum_dt0 - sum_t1 * b - sum_t2 * a) / dataSize;
-    return {a, b, c};
+    // clang-format on
+
+    return std::make_tuple(a, b, c);
 }
-
-
