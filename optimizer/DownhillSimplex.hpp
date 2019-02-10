@@ -162,7 +162,7 @@ _ContainerType downhill_simplex(const _ObjectiveFunction& eval, std::vector<_Con
         else if (y_reflected <= y_currentSimplex[idx_2ndMax])
             accept(x_reflected, y_reflected);
         else { // contraction
-            if (y_reflected < y_currentSimplex[idx_max]) // IGD version does not uses this
+            if (y_reflected < y_currentSimplex[idx_max])
                 accept(x_reflected, y_reflected);
 
             std::transform(x_centroid.cbegin(), x_centroid.cend(), guess[idx_max].cbegin(), x_contracted.begin(),
