@@ -17,6 +17,8 @@ namespace parabola {
 
 namespace higherOrderFunction {
     // x^6 - x^5 - x^4 - x^3 + x^2 + x - 1
+    // link to see a plot of the function:
+    // https://www.wolframalpha.com/input/?i=x%5E6+-+x%5E5+-+x%5E4+-+x%5E3+%2B+x%5E2+%2B+x+-+1
     static constexpr std::array parameters = {1.0, -1.0, -1.0, -1.0, 1.0, 1.0};
 
     double equation(const std::vector<double>& v) {
@@ -52,18 +54,12 @@ void higherOrderFunctionExample() {
     };
 
     // high distance guess
-    {
-        std::vector<std::vector<double>> guess = {{-1000.0}};
-        std::cout << "High distance guess:\n";
-        calc(guess);
-    }
+    std::cout << "High distance guess:\n";
+    calc({{-1000.0}});
 
     // guess near local minima
-    {
-        std::vector<std::vector<double>> guess = {{-0.1}};
-        std::cout << "Guess near local minma:\n";
-        calc(guess);
-    }
+    std::cout << "Guess near local minma:\n";
+    calc({{-0.1}});
 }
 
 int main() {
