@@ -24,7 +24,7 @@ template <typename TableType> struct TableBase {
     template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
         using namespace std::string_view_literals;
         using TypeBase = std::decay_t<ParameterType>;
-        if constexpr (std::is_integral_v<TypeBase>)
+        if constexpr (std::is_integral_v<TypeBase> || std::is_enum_v<TypeBase>)
             return "INTEGER"sv;
         else if constexpr (std::is_floating_point_v<TypeBase>)
             return "REAL"sv;
@@ -46,7 +46,6 @@ template <typename TableType> struct TableBase {
 template <typename TableType, auto... MemberPointer> struct Table : public detail::TableBase<TableType> {
 
     static consteval detail::StaticString<> GetColumenName(unsigned index) {
-        using namespace std::string_view_literals;
         if (index >= GetColumnCount())
             throw std::out_of_range("index out of range");
 
@@ -54,6 +53,13 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
     }
 
     static consteval unsigned GetColumnCount() { return sizeof...(MemberPointer); }
+
+    static consteval detail::StaticString<> GetColumenTypeString(unsigned index) {
+        if (index >= GetColumnCount())
+            throw std::out_of_range("index out of range");
+
+        return GetColumenTypeString_Helper<0, MemberPointer...>(index);
+    }
 
   private:
     template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
@@ -70,6 +76,27 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
             return GetColumenName_Helper<CurrentIndex + 1, MemberPointerRest...>(desiredIndex);
         }
     }
+
+    template <auto MemberPtr> static consteval detail::StaticString<> ConvertMemberPtr2TypeString() {
+        constexpr TableType* ptr = nullptr;
+        using type = decltype(ptr->*MemberPtr);
+        return detail::TableBase<TableType>::template GetSqlTypeString<type>();
+    }
+
+    template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
+    static consteval detail::StaticString<> GetColumenTypeString_Helper(unsigned desiredIndex) {
+        if constexpr (sizeof...(MemberPointerRest) == 0) {
+            if (desiredIndex != CurrentIndex)
+                throw std::out_of_range("index out of range");
+
+            return ConvertMemberPtr2TypeString<FrontMemberPtr>();
+        } else {
+            if (desiredIndex != CurrentIndex)
+                return GetColumenTypeString_Helper<CurrentIndex + 1, MemberPointerRest...>(desiredIndex);
+
+            return ConvertMemberPtr2TypeString<FrontMemberPtr>();
+        }
+    }
 };
 
 template <typename TableType> struct Table<TableType> : public detail::TableBase<TableType> {
@@ -84,6 +111,13 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
 
     static consteval unsigned GetColumnCount() { return boost::pfr::tuple_size_v<TableType>; }
 
+    static consteval detail::StaticString<> GetColumenTypeString(unsigned index) {
+        if (index >= boost::pfr::tuple_size_v<TableType>)
+            throw std::out_of_range("index out of range");
+
+        return GetColumenTypeString_Helper(index);
+    }
+
   private:
     static consteval detail::StaticString<> UnsignedToStringView(unsigned value) {
         if (value > 999)
@@ -95,6 +129,18 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
             value /= 10;
         });
         return std::string_view(std::cbegin(tmpBuffer), std::cend(tmpBuffer));
+    }
+
+    template <unsigned CurrentIndex = 0> static consteval detail::StaticString<> GetColumenTypeString_Helper(unsigned index) {
+        if constexpr (CurrentIndex >= GetColumnCount())
+            throw std::out_of_range("index out of range");
+        else {
+            if (CurrentIndex != index)
+                return GetColumenTypeString_Helper<CurrentIndex + 1>(index);
+
+            using type = decltype(boost::pfr::get<CurrentIndex>(TableType()));
+            return detail::TableBase<TableType>::template GetSqlTypeString<type>();
+        }
     }
 };
 
