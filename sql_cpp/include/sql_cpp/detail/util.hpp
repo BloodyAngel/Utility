@@ -51,4 +51,7 @@ template <typename T, template <typename> typename U> struct IsTemplateBase<U<T>
 template<typename T, template <typename> typename U>
 static constexpr bool IsTemplateBase_v = IsTemplateBase<T, U>::value;
 
+
+
+
 } // namespace sql_cpp::detail

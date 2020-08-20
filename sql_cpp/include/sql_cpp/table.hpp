@@ -61,6 +61,11 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
         return GetColumenTypeString_Helper<0, MemberPointer...>(index);
     }
 
+    static consteval detail::StaticString<> GetColumenNameAndType(unsigned index) {
+        using namespace std::string_view_literals;
+        return GetColumenName(index) + " "sv + GetColumenTypeString(index).to_string_view();
+    }
+
   private:
     template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
     static consteval detail::StaticString<> GetColumenName_Helper(unsigned desiredIndex) {
@@ -116,6 +121,11 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
             throw std::out_of_range("index out of range");
 
         return GetColumenTypeString_Helper(index);
+    }
+
+    static consteval detail::StaticString<> GetColumenNameAndType(unsigned index) {
+        using namespace std::string_view_literals;
+        return GetColumenName(index) + " "sv + GetColumenTypeString(index).to_string_view();
     }
 
   private:
