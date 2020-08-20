@@ -21,6 +21,19 @@ template <typename TableType> struct TableBase {
     using value_type = TableType;
     static consteval auto GetTableName() { return detail::GetClassName<TableType>(); }
 
+    template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
+        using namespace std::string_view_literals;
+        using TypeBase = std::decay_t<ParameterType>;
+        if constexpr (std::is_integral_v<TypeBase>)
+            return "INTEGER"sv;
+        else if constexpr (std::is_floating_point_v<TypeBase>)
+            return "REAL"sv;
+        else if constexpr (detail::IsTemplateBase_v<TypeBase, std::basic_string>)
+            return "TEXT"sv;
+        else
+            return "BLOB"sv;
+    }
+
     /**
      * not yet supported in gcc 10
      * virtual consteval auto getColumenName() = 0;

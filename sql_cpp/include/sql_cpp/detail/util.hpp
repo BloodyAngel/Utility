@@ -3,6 +3,7 @@
 #include "sql_cpp/detail/static_string.hpp"
 
 #include <string_view>
+#include <type_traits>
 
 namespace sql_cpp::detail {
 
@@ -43,5 +44,11 @@ template <auto MemberPtr> static consteval StaticString<> GetMemberName() {
     constexpr auto cbegin = funcName.cbegin();
     return std::string_view{cbegin + beginIndex, cbegin + endIndex};
 }
+
+template <typename T, template <typename> typename U> struct IsTemplateBase : std::false_type{};
+template <typename T, template <typename> typename U> struct IsTemplateBase<U<T>, U> : std::true_type{};
+
+template<typename T, template <typename> typename U>
+static constexpr bool IsTemplateBase_v = IsTemplateBase<T, U>::value;
 
 } // namespace sql_cpp::detail

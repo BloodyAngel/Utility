@@ -1,9 +1,7 @@
-#include "sql_cpp/sql_cpp.hpp"
-#include "sql_cpp/table.hpp"
 
 #include "sql_cpp/detail/static_string.hpp"
-
-#include <sqlite3.h>
+#include "sql_cpp/sql_cpp.hpp"
+#include "sql_cpp/table.hpp"
 
 struct Person {
     uint8_t age;
