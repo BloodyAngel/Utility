@@ -7,7 +7,6 @@
 
 #include <cassert>
 #include <iostream>
-#include <optional>
 #include <ranges>
 #include <string>
 #include <type_traits>
@@ -17,8 +16,20 @@ namespace sql_cpp {
 
 namespace detail {
 
+/// 'overloaded' helper function used used from:
+/// https://en.cppreference.com/w/cpp/utility/variant/visit
+
+// helper type for the visitor #4
+template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+// explicit deduction guide (not needed as of C++20)
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
 template <typename TableType> struct TableBase {
     using value_type = TableType;
+
+    TableBase(const TableType tableType) : m_TableType(tableType) {}
+    TableBase(TableType* const tableType = nullptr) : m_TableType(tableType) {}
+
     static consteval auto GetTableName() { return detail::GetClassName<TableType>(); }
 
     template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
@@ -39,11 +50,38 @@ template <typename TableType> struct TableBase {
      * virtual consteval auto getColumenName() = 0;
      * virtual consteval auto getColumenCount() = 0;
      */
+
+    TableBase& operator=(TableType* const tableType) { m_TableType = tableType; }
+    TableBase& operator=(const TableType& tableType) { m_TableType = tableType; }
+    TableBase& operator=(TableType&& tableType) { m_TableType = std::move_if_noexcept(tableType); }
+
+    TableType* operator->() {
+        return std::visit(overloaded{
+                              [](TableType& tableType) { return &tableType; },
+                              [](TableType* tableType) { return tableType; },
+                          },
+                          m_TableType);
+    }
+    const TableType operator->() const {
+        return std::visit(overloaded{
+                              [](const TableType& tableType) { return &tableType; },
+                              [](const TableType* tableType) { return tableType; },
+                          },
+                          m_TableType);
+    }
+
+    TableType& operator*() { return *(*this).operator->(); }
+    const TableType& operator*() const { return *(*this).operator->(); }
+
+  protected:
+    std::variant<TableType, TableType*> m_TableType;
 };
 
 } // namespace detail
 
 template <typename TableType, auto... MemberPointer> struct Table : public detail::TableBase<TableType> {
+    Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
+    Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
 
     static consteval detail::StaticString<> GetColumenName(unsigned index) {
         if (index >= GetColumnCount())
@@ -105,6 +143,8 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
 };
 
 template <typename TableType> struct Table<TableType> : public detail::TableBase<TableType> {
+    Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
+    Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
 
     static consteval detail::StaticString<> GetColumenName(unsigned index) {
         using namespace std::string_view_literals;

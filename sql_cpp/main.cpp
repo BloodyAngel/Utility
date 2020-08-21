@@ -3,6 +3,8 @@
 #include "sql_cpp/sql_cpp.hpp"
 #include "sql_cpp/table.hpp"
 
+#include "sql_cpp/detail/create_table.hpp"
+
 struct Person {
     uint8_t age;
     std::string name;
@@ -13,15 +15,25 @@ int main() {
     std::cout << tb0.GetTableName().to_string() << std::endl;
     std::cout << tb0.GetColumenNameAndType(0).to_string() << std::endl;
     std::cout << tb0.GetColumenNameAndType(1).to_string() << std::endl;
-//    std::cout << tb0.GetColumenName(0).to_string() << '\t' << tb0.GetColumenTypeString(0).to_string() << std::endl;
-//    std::cout << tb0.GetColumenName(1).to_string() << '\t' << tb0.GetColumenTypeString(1).to_string() << '\n' << std::endl;
 
     sql_cpp::Table<Person> tb1;
     std::cout << tb1.GetTableName().to_string_view() << std::endl;
     std::cout << tb1.GetColumenNameAndType(0).to_string() << std::endl;
     std::cout << tb1.GetColumenNameAndType(1).to_string() << std::endl;
-//    std::cout << tb1.GetColumenName(0).to_string() << '\t' << tb1.GetColumenTypeString(0).to_string() << std::endl;
-//    std::cout << tb1.GetColumenName(1).to_string() << '\t' << tb1.GetColumenTypeString(1).to_string() << '\n' << std::endl;
+
+    std::cout << "\n" << std::endl;
+    std::cout << sql_cpp::detail::Generate_CreateTableString<sql_cpp::Table<Person, &Person::name, &Person::age>>().to_string() << std::endl;
+    std::cout << std::endl;
+
+    Person p { .age = 123, .name = "peter" };
+    sql_cpp::Table<Person> table_ref(&p);
+    sql_cpp::Table<Person> table(p);
+    table->age = 222;
+    table->name = "hans";
+
+    std::cout << int(p.age) << ' ' << p.name << std::endl;;
+    std::cout << int(table->age) << ' ' << (*table).name << std::endl;;
+    std::cout << int(table_ref->age) << ' ' << (*table_ref).name << std::endl;;
 
     return 0;
 }
