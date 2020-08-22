@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sql_cpp/detail/create_table.hpp"
+#include "sql_cpp/detail/drop_table.hpp"
 #include "sql_cpp/detail/insert.hpp"
 
 #include "sql_cpp/detail/static_string.hpp"

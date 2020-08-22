@@ -33,4 +33,4 @@ template <typename TableType> static consteval auto Generate_InsertTableString(c
     return baseString;
 }
 
-}
+} // namespace sql_cpp::detail
