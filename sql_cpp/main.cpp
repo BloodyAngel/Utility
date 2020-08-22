@@ -13,13 +13,13 @@ struct Person {
 int main() {
     sql_cpp::Table<Person, &Person::age, &Person::name> tb0;
     std::cout << tb0.GetTableName().to_string() << std::endl;
-    std::cout << tb0.GetColumenNameAndType(0).to_string() << std::endl;
-    std::cout << tb0.GetColumenNameAndType(1).to_string() << std::endl;
+    std::cout << tb0.GetColumenNameAndType<0>().to_string() << std::endl;
+    std::cout << tb0.GetColumenNameAndType<1>().to_string() << std::endl;
 
     sql_cpp::Table<Person> tb1;
     std::cout << tb1.GetTableName().to_string_view() << std::endl;
-    std::cout << tb1.GetColumenNameAndType(0).to_string() << std::endl;
-    std::cout << tb1.GetColumenNameAndType(1).to_string() << std::endl;
+    std::cout << tb1.GetColumenNameAndType<0>().to_string() << std::endl;
+    std::cout << tb1.GetColumenNameAndType<1>().to_string() << std::endl;
 
     std::cout << "\n" << std::endl;
     std::cout << sql_cpp::detail::Generate_CreateTableString<sql_cpp::Table<Person, &Person::name, &Person::age>>().to_string() << std::endl;

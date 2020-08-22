@@ -9,9 +9,9 @@ template <typename TableType, unsigned CurrentIndex = 0>
 static consteval auto Generate_CreateTableString_CreateAllColumnNamesAndTypes() {
     using namespace std::string_view_literals;
     if constexpr (CurrentIndex + 1 == TableType::GetColumnCount())
-        return TableType::GetColumenNameAndType(CurrentIndex);
+        return TableType::template GetColumenNameAndType<CurrentIndex>();
     else if constexpr (CurrentIndex + 1 < TableType::GetColumnCount())
-        return TableType::GetColumenNameAndType(CurrentIndex) + ", "sv +
+        return TableType::template GetColumenNameAndType<CurrentIndex>() + ", "sv +
                Generate_CreateTableString_CreateAllColumnNamesAndTypes<TableType, CurrentIndex + 1>().to_string_view();
     else
         throw std::out_of_range("index out of range");

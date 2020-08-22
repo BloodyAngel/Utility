@@ -9,6 +9,7 @@
 #include <iostream>
 #include <ranges>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <variant>
 
@@ -115,63 +116,24 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
     Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
     Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
 
-    static consteval detail::StaticString<> GetColumenName(unsigned index) {
-        if (index >= GetColumnCount())
-            throw std::out_of_range("index out of range");
-
-        return GetColumenName_Helper<0, MemberPointer...>(index);
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
+        constexpr auto tuple = std::make_tuple(MemberPointer...);
+        return detail::GetMemberName<std::get<Index>(tuple)>();
     }
 
     static consteval unsigned GetColumnCount() { return sizeof...(MemberPointer); }
 
-    static consteval detail::StaticString<> GetColumenTypeString(unsigned index) {
-        if (index >= GetColumnCount())
-            throw std::out_of_range("index out of range");
-
-        return GetColumenTypeString_Helper<0, MemberPointer...>(index);
-    }
-
-    static consteval detail::StaticString<> GetColumenNameAndType(unsigned index) {
-        using namespace std::string_view_literals;
-        return GetColumenName(index) + " "sv + GetColumenTypeString(index).to_string_view();
-    }
-
-  private:
-
-    template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
-    static consteval detail::StaticString<> GetColumenName_Helper(unsigned desiredIndex) {
-        if constexpr (sizeof...(MemberPointerRest) == 0) {
-            if (CurrentIndex != desiredIndex)
-                throw std::out_of_range("index out of range");
-
-            return detail::GetMemberName<FrontMemberPtr>();
-        } else {
-            if (desiredIndex == CurrentIndex)
-                return detail::GetMemberName<FrontMemberPtr>();
-
-            return GetColumenName_Helper<CurrentIndex + 1, MemberPointerRest...>(desiredIndex);
-        }
-    }
-
-    template <auto MemberPtr> static consteval detail::StaticString<> ConvertMemberPtr2TypeString() {
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
         constexpr TableType* ptr = nullptr;
-        using type = decltype(ptr->*MemberPtr);
+        constexpr auto tuple = std::make_tuple(MemberPointer...);
+
+        using type = decltype(ptr->*std::get<Index>(tuple));
         return detail::TableBase<TableType>::template GetSqlTypeString<type>();
     }
 
-    template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
-    static consteval detail::StaticString<> GetColumenTypeString_Helper(unsigned desiredIndex) {
-        if constexpr (sizeof...(MemberPointerRest) == 0) {
-            if (desiredIndex != CurrentIndex)
-                throw std::out_of_range("index out of range");
-
-            return ConvertMemberPtr2TypeString<FrontMemberPtr>();
-        } else {
-            if (desiredIndex != CurrentIndex)
-                return GetColumenTypeString_Helper<CurrentIndex + 1, MemberPointerRest...>(desiredIndex);
-
-            return ConvertMemberPtr2TypeString<FrontMemberPtr>();
-        }
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
+        using namespace std::string_view_literals;
+        return GetColumenName<Index>() + " "sv + GetColumenTypeString<Index>().to_string_view();
     }
 };
 
@@ -179,26 +141,24 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
     Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
     Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
 
-    static consteval detail::StaticString<> GetColumenName(unsigned index) {
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
         using namespace std::string_view_literals;
-        if (index >= GetColumnCount())
+        if (Index >= GetColumnCount())
             throw std::out_of_range("index out of range");
 
-        return detail::StaticString<>("column_"sv) + UnsignedToStringView(index).to_string_view();
+        return detail::StaticString<>("column_"sv) + UnsignedToStringView(Index).to_string_view();
     }
 
     static consteval unsigned GetColumnCount() { return boost::pfr::tuple_size_v<TableType>; }
 
-    static consteval detail::StaticString<> GetColumenTypeString(unsigned index) {
-        if (index >= boost::pfr::tuple_size_v<TableType>)
-            throw std::out_of_range("index out of range");
-
-        return GetColumenTypeString_Helper(index);
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
+        using type = decltype(boost::pfr::get<Index>(TableType()));
+        return detail::TableBase<TableType>::template GetSqlTypeString<type>();
     }
 
-    static consteval detail::StaticString<> GetColumenNameAndType(unsigned index) {
+    template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
         using namespace std::string_view_literals;
-        return GetColumenName(index) + " "sv + GetColumenTypeString(index).to_string_view();
+        return GetColumenName<Index>() + " "sv + GetColumenTypeString<Index>().to_string_view();
     }
 
   private:
@@ -212,18 +172,6 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
             value /= 10;
         });
         return std::string_view(std::cbegin(tmpBuffer), std::cend(tmpBuffer));
-    }
-
-    template <unsigned CurrentIndex = 0> static consteval detail::StaticString<> GetColumenTypeString_Helper(unsigned index) {
-        if constexpr (CurrentIndex >= GetColumnCount())
-            throw std::out_of_range("index out of range");
-        else {
-            if (CurrentIndex != index)
-                return GetColumenTypeString_Helper<CurrentIndex + 1>(index);
-
-            using type = decltype(boost::pfr::get<CurrentIndex>(TableType()));
-            return detail::TableBase<TableType>::template GetSqlTypeString<type>();
-        }
     }
 };
 
