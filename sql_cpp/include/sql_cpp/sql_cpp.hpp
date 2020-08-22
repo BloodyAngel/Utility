@@ -1,6 +1,8 @@
 #pragma once
 
 #include "sql_cpp/detail/create_table.hpp"
+#include "sql_cpp/detail/insert.hpp"
+
 #include "sql_cpp/detail/static_string.hpp"
 #include "sql_cpp/detail/util.hpp"
 #include "sql_cpp/table.hpp"
@@ -36,7 +38,8 @@ template <typename TableType> void SqlCpp::createTable() {
 }
 template <typename TableType> void SqlCpp::insert(const TableType& tableType) {
     if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
-        /// TODO
+        constexpr auto sqlString = detail::Generate_InsertTableString(tableType);
+        std::cout << "Insert string: " << sqlString.to_string_view() << std::endl;
     } else
         return insert(Table<TableType>(&tableType));
 }

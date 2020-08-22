@@ -7,6 +7,8 @@ namespace sql_cpp::detail {
 
 template <typename CharType = char, unsigned BufferSize = 64> struct StaticString {
     using size_type = std::string_view::size_type;
+    using value_type = CharType;
+
     /// TODO: missing typedef's
 
     constexpr StaticString() {
