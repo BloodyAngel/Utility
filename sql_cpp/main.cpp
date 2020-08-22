@@ -38,7 +38,7 @@ int main() {
 
     sql_cpp::SqlCpp sql;
     sql.createTable<Person>();
-    sql.insert(Person());
+    sql.insert(p);
     sql.dropTable<Person>();
     std::cout << std::endl;
 
