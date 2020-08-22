@@ -26,23 +26,23 @@ struct SqlCpp {
 template <typename TableType> void SqlCpp::dropTable() {
     if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
         constexpr auto sqlString = detail::Generate_DropTableString<TableType>();
-        std::cout << "Drop table string: " << sqlString.to_string_view() << std::endl;
+        std::cout << sqlString.to_string_view() << std::endl;
     } else
-        return createTable<Table<TableType>>();
+        return dropTable<Table<TableType>>();
 }
 template <typename TableType> void SqlCpp::createTable() {
     if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
         constexpr auto sqlString = detail::Generate_CreateTableString<TableType>();
-        std::cout << "Create table string: " << sqlString.to_string_view() << std::endl;
+        std::cout << sqlString.to_string_view() << std::endl;
     } else
         return createTable<Table<TableType>>();
 }
 template <typename TableType> void SqlCpp::insert(const TableType& tableType) {
     if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
-        constexpr auto sqlString = detail::Generate_InsertTableString(tableType);
-        std::cout << "Insert string: " << sqlString.to_string_view() << std::endl;
+        const auto sqlString = detail::Generate_InsertTableString(tableType);
+        std::cout << sqlString << std::endl;
     } else
-        return insert(Table<TableType>(&tableType));
+        return insert(Table<TableType>(tableType));
 }
 
 template <typename TableType_FwdIter> void SqlCpp::insert(TableType_FwdIter begin, TableType_FwdIter end) {

@@ -34,6 +34,13 @@ int main() {
     std::cout << int(p.age) << ' ' << p.name << std::endl;;
     std::cout << int(table->age) << ' ' << (*table).name << std::endl;;
     std::cout << int(table_ref->age) << ' ' << (*table_ref).name << std::endl;;
+    std::cout << std::endl;
+
+    sql_cpp::SqlCpp sql;
+    sql.createTable<Person>();
+    sql.insert(Person());
+    sql.dropTable<Person>();
+    std::cout << std::endl;
 
     return 0;
 }

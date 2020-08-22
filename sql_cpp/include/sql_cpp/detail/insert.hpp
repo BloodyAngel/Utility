@@ -9,33 +9,28 @@ namespace sql_cpp::detail {
 template <typename TableType, unsigned CurrentIndex = 0>
 static consteval auto Generate_InsertTableString_CreateAllColumnNames() {
     using namespace std::string_view_literals;
-    if constexpr (CurrentIndex + 1 == TableType::GetColumnCount())
-        return TableType::GetColumenName(CurrentIndex);
-    else if constexpr (CurrentIndex + 1 < TableType::GetColumnCount())
-        return TableType::GetColumenName(CurrentIndex) + ", "sv +
+    using DecayedTableType = std::decay_t<TableType>;
+    if constexpr (CurrentIndex + 1 == DecayedTableType::GetColumnCount())
+        return DecayedTableType::template GetColumenName<CurrentIndex>();
+    else if constexpr (CurrentIndex + 1 < DecayedTableType::GetColumnCount())
+        return DecayedTableType::template GetColumenName<CurrentIndex>() + ", "sv +
                Generate_InsertTableString_CreateAllColumnNames<TableType, CurrentIndex + 1>().to_string_view();
     else
         throw std::out_of_range("index out of range");
 }
 template <typename TableType, unsigned CurrentIndex = 0>
-static consteval auto Generate_InsertTableString_CreateAllColumnValues() {
-    using namespace std::string_view_literals;
-    if constexpr (CurrentIndex + 1 == TableType::GetColumnCount())
-        return TableType::GetColumenName(CurrentIndex);
-    else if constexpr (CurrentIndex + 1 < TableType::GetColumnCount())
-        return TableType::GetColumenName(CurrentIndex) + ", "sv +
-               Generate_InsertTableString_CreateAllColumnNames<TableType, CurrentIndex + 1>().to_string_view();
-    else
-        throw std::out_of_range("index out of range");
+static constexpr auto Generate_InsertTableString_CreateAllColumnValues(TableType&& tableType) {
+    return std::string();
 }
-template <typename TableType> static consteval auto Generate_InsertTableString(TableType&& tableType) {
+template <typename TableType> static constexpr auto Generate_InsertTableString(TableType&& tableType) {
     using namespace std::string_view_literals;
-    constexpr auto baseString = "insert into "sv + TableType::GetTableName() + "("sv +
-                                Generate_InsertTableString_CreateAllColumnNames<TableType>() + ") "sv;
+    using DecayedTableType = std::decay_t<TableType>;
+    constexpr auto baseString = StaticString<>() + "insert into "sv + DecayedTableType::GetTableName().to_string_view() + "("sv +
+                                Generate_InsertTableString_CreateAllColumnNames<DecayedTableType>().to_string_view() + ") "sv;
 
-    constexpr auto valueString = "("sv + Generate_InsertTableString_CreateAllColumnValues(std::forward(tableType)) + ")"sv;
+    auto valueString = '(' + Generate_InsertTableString_CreateAllColumnValues(std::forward<TableType>(tableType)) + ')';
 
-    return baseString + valueString.to_string_view() + ";"sv;
+    return baseString.to_string() + valueString + ';';
 }
 
 } // namespace sql_cpp::detail
