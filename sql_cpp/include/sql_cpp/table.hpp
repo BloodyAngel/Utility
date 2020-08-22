@@ -32,17 +32,49 @@ template <typename TableType> struct TableBase {
 
     static consteval auto GetTableName() { return detail::GetClassName<TableType>(); }
 
-    template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
-        using namespace std::string_view_literals;
+    enum class SqlType { integer, real, text, blob };
+
+    template <typename ParameterType> static consteval SqlType GetSqlType() {
         using TypeBase = std::decay_t<ParameterType>;
         if constexpr (std::is_integral_v<TypeBase> || std::is_enum_v<TypeBase>)
-            return "INTEGER"sv;
+            return SqlType::integer;
         else if constexpr (std::is_floating_point_v<TypeBase>)
-            return "REAL"sv;
+            return SqlType::real;
         else if constexpr (detail::IsTemplateBase_v<TypeBase, std::basic_string>)
-            return "TEXT"sv;
+            return SqlType::text;
         else
+            return SqlType::blob;
+    }
+
+    template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
+        using namespace std::string_view_literals;
+        switch (GetSqlType<ParameterType>()) {
+        case SqlType::integer:
+            return "INTEGER"sv;
+        case SqlType::real:
+            return "REAL"sv;
+        case SqlType::text:
+            return "TEXT"sv;
+        case SqlType::blob:
             return "BLOB"sv;
+        }
+        throw std::out_of_range("unkown SqlType");
+    }
+
+    template <typename ParameterType> static constexpr std::string GetSqlValueString(const ParameterType& parameterType) {
+        using namespace std::string_view_literals;
+        switch (GetSqlType<ParameterType>()) {
+        case SqlType::integer:
+        case SqlType::real:
+            return std::to_string(parameterType);
+        case SqlType::text:
+            return parameterType;
+        case SqlType::blob:
+            /// TODO
+            /// add auto serialize with boost::pfr
+            throw std::runtime_error("blob's are not (yet) supported");
+        }
+        throw std::out_of_range("unkown SqlType");
     }
 
     /**
@@ -105,6 +137,7 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
     }
 
   private:
+
     template <unsigned CurrentIndex, auto FrontMemberPtr, auto... MemberPointerRest>
     static consteval detail::StaticString<> GetColumenName_Helper(unsigned desiredIndex) {
         if constexpr (sizeof...(MemberPointerRest) == 0) {

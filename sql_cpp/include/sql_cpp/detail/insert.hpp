@@ -2,10 +2,12 @@
 
 #include "sql_cpp/table.hpp"
 
+#include <utility>
+
 namespace sql_cpp::detail {
 
 template <typename TableType, unsigned CurrentIndex = 0>
-static consteval auto Generate_InsertTableString_CreateAllColumnNames(const TableType& tableType) {
+static consteval auto Generate_InsertTableString_CreateAllColumnNames() {
     using namespace std::string_view_literals;
     if constexpr (CurrentIndex + 1 == TableType::GetColumnCount())
         return TableType::GetColumenName(CurrentIndex);
@@ -26,11 +28,14 @@ static consteval auto Generate_InsertTableString_CreateAllColumnValues() {
     else
         throw std::out_of_range("index out of range");
 }
-template <typename TableType> static consteval auto Generate_InsertTableString(const TableType& tableType) {
+template <typename TableType> static consteval auto Generate_InsertTableString(TableType&& tableType) {
     using namespace std::string_view_literals;
     constexpr auto baseString = "insert into "sv + TableType::GetTableName() + "("sv +
                                 Generate_InsertTableString_CreateAllColumnNames<TableType>() + ") "sv;
-    return baseString;
+
+    constexpr auto valueString = "("sv + Generate_InsertTableString_CreateAllColumnValues(std::forward(tableType)) + ")"sv;
+
+    return baseString + valueString.to_string_view() + ";"sv;
 }
 
 } // namespace sql_cpp::detail
