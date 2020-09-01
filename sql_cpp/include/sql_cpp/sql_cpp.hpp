@@ -17,8 +17,10 @@ struct SqlCpp {
 
     template <typename TableStruct> void dropTable();
     template <typename TableStruct> void createTable();
+
     template <typename TableStruct> void insert(const TableStruct& tableStruct);
-    template <typename TableStruct_FwdIter> void insert(TableStruct_FwdIter begin, TableStruct_FwdIter end);
+    template <typename TableStruct_FwdIter, typename TableStruct_FwdIter_Sentinal>
+    void insert(TableStruct_FwdIter begin, TableStruct_FwdIter_Sentinal end);
 
   private:
 };
@@ -37,9 +39,8 @@ template <typename TableStruct> void SqlCpp::insert(const TableStruct& tableStru
     return insert(&tableStruct, std::next(&tableStruct));
 }
 
-template <typename TableStruct_FwdIter> void SqlCpp::insert(TableStruct_FwdIter begin, TableStruct_FwdIter end) {
-    /// simplified
-    /// performance can be fastly improved!!
+template <typename TableStruct_FwdIter, typename TableStruct_FwdIter_Sentinal>
+void SqlCpp::insert(TableStruct_FwdIter begin, TableStruct_FwdIter_Sentinal end) {
     using TableStruct = std::decay_t<decltype(*begin)>;
     using TableType = detail::TableTypeSelector_t<TableStruct>;
 

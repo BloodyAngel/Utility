@@ -6,13 +6,14 @@
 #include "sql_cpp/detail/table.hpp"
 
 struct Person {
-    uint8_t age;
-    std::string name;
+    uint8_t age = 0;
+    std::string name = "hans";
 };
 
 struct Person2 {
-    uint8_t age;
-    std::string name;
+    uint8_t age = 1;
+    std::string name = "peter";
+    using sql_cpp_column_list_type = sql_cpp::ColumnList<&Person2::age, &Person2::name>;
 };
 
 int main() {
@@ -28,6 +29,17 @@ int main() {
     std::fill(people.begin(), people.end(), Person());
     sql.insert(people.cbegin(), people.cend());
     sql.dropTable<Person>();
+
+
+    std::cout << std::endl;
+
+    sql.createTable<Person2>();
+    sql.insert(Person2());
+    std::array<Person2, 4> people2;
+    std::fill(people2.begin(), people2.end(), Person2());
+    sql.insert(people2.cbegin(), people2.cend());
+    sql.dropTable<Person2>();
+
     std::cout << std::endl;
 
     return 0;

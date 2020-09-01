@@ -22,7 +22,7 @@ template <typename TableStruct> struct TableBase {
 
     using value_type = TableStruct;
 
-    static consteval auto GetTableName() { return detail::GetClassName<TableStruct>(); }
+    static consteval auto GetTableName() { return GetClassName<TableStruct>(); }
 
     enum class SqlType { integer, real, text, blob };
 
@@ -32,13 +32,13 @@ template <typename TableStruct> struct TableBase {
             return SqlType::integer;
         else if constexpr (std::is_floating_point_v<TypeBase>)
             return SqlType::real;
-        else if constexpr (detail::IsTemplateOf_v<TypeBase, std::basic_string>)
+        else if constexpr (IsTemplateOf_v<TypeBase, std::basic_string>)
             return SqlType::text;
         else
             return SqlType::blob;
     }
 
-    template <typename ParameterType> static consteval detail::StaticString<> GetSqlTypeString() {
+    template <typename ParameterType> static consteval StaticString<> GetSqlTypeString() {
         using namespace std::string_view_literals;
         switch (GetSqlType<ParameterType>()) {
         case SqlType::integer:
@@ -96,26 +96,26 @@ template <typename TableStruct> struct TableBase {
     }
 };
 
-template <typename TableStruct, auto... MemberPointer> struct Table final : public detail::TableBase<TableStruct> {
+template <typename TableStruct, auto... MemberPointer> struct Table final : public TableBase<TableStruct> {
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
-        return detail::GetMemberName<GetMemberPointer<Index>>();
+    template <unsigned Index> static consteval StaticString<> GetColumenName() {
+        return GetMemberName<GetMemberPointer<Index>()>();
     }
 
     static consteval unsigned GetColumnCount() { return sizeof...(MemberPointer); }
 
     template <unsigned Index> static std::string GetSqlValueStringFromIndex(const TableStruct& tableStruct) {
         constexpr auto ptr = GetMemberPointer<Index>();
-        return GetSqlValueString(tableStruct.*ptr);
+        return TableBase<TableStruct>::GetSqlValueString(tableStruct.*ptr);
     }
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
+    template <unsigned Index> static consteval StaticString<> GetColumenTypeString() {
         constexpr TableStruct* ptr = nullptr;
         using type = decltype(ptr->*GetMemberPointer<Index>());
-        return detail::TableBase<TableStruct>::template GetSqlTypeString<type>();
+        return TableBase<TableStruct>::template GetSqlTypeString<type>();
     }
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
+    template <unsigned Index> static consteval StaticString<> GetColumenNameAndType() {
         using namespace std::string_view_literals;
         return GetColumenName<Index>() + " "sv + GetColumenTypeString<Index>().to_string_view();
     }
@@ -127,35 +127,35 @@ template <typename TableStruct, auto... MemberPointer> struct Table final : publ
     }
 };
 
-template <typename TableStruct> struct Table<TableStruct> final : public detail::TableBase<TableStruct> {
+template <typename TableStruct> struct Table<TableStruct> final : public TableBase<TableStruct> {
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
+    template <unsigned Index> static consteval StaticString<> GetColumenName() {
         using namespace std::string_view_literals;
         if (Index >= GetColumnCount())
             throw std::out_of_range("index out of range");
 
-        return detail::StaticString<>("column_"sv) + UnsignedToStringView(Index).to_string_view();
+        return StaticString<>("column_"sv) + UnsignedToStringView(Index).to_string_view();
     }
 
     static consteval unsigned GetColumnCount() { return boost::pfr::tuple_size_v<TableStruct>; }
 
     template <unsigned Index> static std::string GetSqlValueStringFromIndex(const TableStruct& tableStruct) {
         const auto& value = boost::pfr::get<Index>(tableStruct);
-        return detail::TableBase<TableStruct>::GetSqlValueString(value);
+        return TableBase<TableStruct>::GetSqlValueString(value);
     }
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
+    template <unsigned Index> static consteval StaticString<> GetColumenTypeString() {
         using type = decltype(boost::pfr::get<Index>(TableStruct()));
-        return detail::TableBase<TableStruct>::template GetSqlTypeString<type>();
+        return TableBase<TableStruct>::template GetSqlTypeString<type>();
     }
 
-    template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
+    template <unsigned Index> static consteval StaticString<> GetColumenNameAndType() {
         using namespace std::string_view_literals;
         return GetColumenName<Index>() + " "sv + GetColumenTypeString<Index>().to_string_view();
     }
 
   private:
-    static consteval detail::StaticString<> UnsignedToStringView(unsigned value) {
+    static consteval StaticString<> UnsignedToStringView(unsigned value) {
         if (value > 999)
             throw std::out_of_range("currently only supports up to 999");
 
