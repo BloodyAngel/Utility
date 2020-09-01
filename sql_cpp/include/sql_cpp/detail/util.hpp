@@ -45,13 +45,21 @@ template <auto MemberPtr> static consteval StaticString<> GetMemberName() {
     return std::string_view{cbegin + beginIndex, cbegin + endIndex};
 }
 
-template <typename T, template <typename> typename U> struct IsTemplateBase : std::false_type{};
-template <typename T, template <typename> typename U> struct IsTemplateBase<U<T>, U> : std::true_type{};
+template <typename T, template <typename> typename U> struct IsTemplateOf : std::false_type {};
+template <typename T, template <typename> typename U> struct IsTemplateOf<U<T>, U> : std::true_type {};
 
-template<typename T, template <typename> typename U>
-static constexpr bool IsTemplateBase_v = IsTemplateBase<T, U>::value;
+template <typename T, template <typename> typename U> static constexpr bool IsTemplateOf_v = IsTemplateOf<T, U>::value;
 
+template <auto MemberPtr> class MemberPointerTraits {
+    static_assert(std::is_member_object_pointer_v<decltype(MemberPtr)>, "No Member Ptr");
 
+    // only declaration, no implementation
+    template <typename ClassType, typename MemberType> static ClassType GetClassType(MemberType ClassType::*);
+    template <typename ClassType, typename MemberType> static MemberType GetValueType(MemberType ClassType::*);
 
+  public:
+    using class_type = decltype(GetClassType(MemberPtr));
+    using value_type = decltype(GetValueType(MemberPtr));
+};
 
 } // namespace sql_cpp::detail

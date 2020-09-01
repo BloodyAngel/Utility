@@ -5,8 +5,8 @@
 #include "sql_cpp/detail/insert.hpp"
 
 #include "sql_cpp/detail/static_string.hpp"
+#include "sql_cpp/detail/table.hpp"
 #include "sql_cpp/detail/util.hpp"
-#include "sql_cpp/table.hpp"
 
 #include <sqlite3.h>
 #include <vector>
@@ -15,40 +15,36 @@ namespace sql_cpp {
 
 struct SqlCpp {
 
-    template <typename TableType> void dropTable();
-    template <typename TableType> void createTable();
-    template <typename TableType> void insert(const TableType& tableType);
-    template <typename TableType_FwdIter> void insert(TableType_FwdIter begin, TableType_FwdIter end);
+    template <typename TableStruct> void dropTable();
+    template <typename TableStruct> void createTable();
+    template <typename TableStruct> void insert(const TableStruct& tableStruct);
+    template <typename TableStruct_FwdIter> void insert(TableStruct_FwdIter begin, TableStruct_FwdIter end);
 
   private:
 };
 
-template <typename TableType> void SqlCpp::dropTable() {
-    if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
-        constexpr auto sqlString = detail::Generate_DropTableString<TableType>();
-        std::cout << sqlString.to_string_view() << std::endl;
-    } else
-        return dropTable<Table<TableType>>();
+template <typename TableStruct> void SqlCpp::dropTable() {
+    using TableType = detail::TableTypeSelector_t<TableStruct>;
+    constexpr auto sqlString = detail::Generate_DropTableString<TableType>();
+    std::cout << sqlString.to_string_view() << std::endl;
 }
-template <typename TableType> void SqlCpp::createTable() {
-    if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
-        constexpr auto sqlString = detail::Generate_CreateTableString<TableType>();
-        std::cout << sqlString.to_string_view() << std::endl;
-    } else
-        return createTable<Table<TableType>>();
+template <typename TableStruct> void SqlCpp::createTable() {
+    using TableType = detail::TableTypeSelector_t<TableStruct>;
+    constexpr auto sqlString = detail::Generate_CreateTableString<TableType>();
+    std::cout << sqlString.to_string_view() << std::endl;
 }
-template <typename TableType> void SqlCpp::insert(const TableType& tableType) {
-    if constexpr (detail::IsTemplateBase_v<TableType, Table>) {
-        const auto sqlString = detail::Generate_InsertTableString(tableType);
-        std::cout << sqlString << std::endl;
-    } else
-        return insert(Table<TableType>(tableType));
+template <typename TableStruct> void SqlCpp::insert(const TableStruct& tableStruct) {
+    return insert(&tableStruct, std::next(&tableStruct));
 }
 
-template <typename TableType_FwdIter> void SqlCpp::insert(TableType_FwdIter begin, TableType_FwdIter end) {
+template <typename TableStruct_FwdIter> void SqlCpp::insert(TableStruct_FwdIter begin, TableStruct_FwdIter end) {
     /// simplified
     /// performance can be fastly improved!!
-    std::for_each(begin, end, [this](const auto& tableType) { insert(tableType); });
+    using TableStruct = std::decay_t<decltype(*begin)>;
+    using TableType = detail::TableTypeSelector_t<TableStruct>;
+
+    const auto sqlString = detail::Generate_InsertTableString<TableType>(begin, end);
+    std::cout << sqlString << std::endl;
 }
 
 } // namespace sql_cpp

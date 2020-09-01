@@ -1,7 +1,8 @@
 #pragma once
 
 #include "sql_cpp/detail/static_string.hpp"
-#include "sql_cpp/table.hpp"
+#include "sql_cpp/detail/table.hpp"
+#include "sql_cpp/detail/util.hpp"
 
 namespace sql_cpp::detail {
 
@@ -18,7 +19,6 @@ static consteval auto Generate_CreateTableString_CreateAllColumnNamesAndTypes() 
 }
 template <typename TableType> static consteval auto Generate_CreateTableString() {
     using namespace std::string_view_literals;
-
     constexpr auto CommandStart = StaticString<>("create table "sv) + (TableType::GetTableName() + "("sv).to_string_view();
     constexpr auto CommandParameter = Generate_CreateTableString_CreateAllColumnNamesAndTypes<TableType>();
     constexpr auto CommandEnd = ");"sv;

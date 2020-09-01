@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/pfr.hpp>
+#include <boost/tti/has_type.hpp>
 
 #include "sql_cpp/detail/static_string.hpp"
 #include "sql_cpp/detail/util.hpp"
@@ -13,25 +14,15 @@
 #include <type_traits>
 #include <variant>
 
-namespace sql_cpp {
+BOOST_TTI_HAS_TYPE(sql_cpp_column_list_type)
 
-namespace detail {
+namespace sql_cpp::detail {
 
-/// 'overloaded' helper function used used from:
-/// https://en.cppreference.com/w/cpp/utility/variant/visit
+template <typename TableStruct> struct TableBase {
 
-// helper type for the visitor #4
-template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-// explicit deduction guide (not needed as of C++20)
-template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+    using value_type = TableStruct;
 
-template <typename TableType> struct TableBase {
-    using value_type = TableType;
-
-    TableBase(const TableType tableType) : m_TableType(tableType) {}
-    TableBase(TableType* const tableType = nullptr) : m_TableType(tableType) {}
-
-    static consteval auto GetTableName() { return detail::GetClassName<TableType>(); }
+    static consteval auto GetTableName() { return detail::GetClassName<TableStruct>(); }
 
     enum class SqlType { integer, real, text, blob };
 
@@ -41,7 +32,7 @@ template <typename TableType> struct TableBase {
             return SqlType::integer;
         else if constexpr (std::is_floating_point_v<TypeBase>)
             return SqlType::real;
-        else if constexpr (detail::IsTemplateBase_v<TypeBase, std::basic_string>)
+        else if constexpr (detail::IsTemplateOf_v<TypeBase, std::basic_string>)
             return SqlType::text;
         else
             return SqlType::blob;
@@ -83,31 +74,6 @@ template <typename TableType> struct TableBase {
      * virtual consteval auto getColumenCount() = 0;
      */
 
-    TableBase& operator=(TableType* const tableType) { m_TableType = tableType; }
-    TableBase& operator=(const TableType& tableType) { m_TableType = tableType; }
-    TableBase& operator=(TableType&& tableType) { m_TableType = std::move_if_noexcept(tableType); }
-
-    TableType* operator->() {
-        return std::visit(overloaded{
-                              [](TableType& tableType) { return &tableType; },
-                              [](TableType* tableType) { return tableType; },
-                          },
-                          m_TableType);
-    }
-    const TableType* operator->() const {
-        return std::visit(overloaded{
-                              [](const TableType& tableType) { return &tableType; },
-                              [](const TableType* tableType) { return tableType; },
-                          },
-                          m_TableType);
-    }
-
-    TableType& operator*() { return *(*this).operator->(); }
-    const TableType& operator*() const { return *(*this).operator->(); }
-
-  protected:
-    std::variant<TableType, TableType*> m_TableType;
-
   private:
     static constexpr bool IsValidSqlStringCharacter(char c) {
         /// TODO: add correct function
@@ -130,11 +96,7 @@ template <typename TableType> struct TableBase {
     }
 };
 
-} // namespace detail
-
-template <typename TableType, auto... MemberPointer> struct Table : public detail::TableBase<TableType> {
-    Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
-    Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
+template <typename TableStruct, auto... MemberPointer> struct Table final : public detail::TableBase<TableStruct> {
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
         return detail::GetMemberName<GetMemberPointer<Index>>();
@@ -142,16 +104,15 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
 
     static consteval unsigned GetColumnCount() { return sizeof...(MemberPointer); }
 
-    template <unsigned Index> std::string getSqlValueString() const {
-        TableType& self = *this;
+    template <unsigned Index> static std::string GetSqlValueStringFromIndex(const TableStruct& tableStruct) {
         constexpr auto ptr = GetMemberPointer<Index>();
-        return GetSqlValueString(self.*ptr);
+        return GetSqlValueString(tableStruct.*ptr);
     }
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
-        constexpr TableType* ptr = nullptr;
+        constexpr TableStruct* ptr = nullptr;
         using type = decltype(ptr->*GetMemberPointer<Index>());
-        return detail::TableBase<TableType>::template GetSqlTypeString<type>();
+        return detail::TableBase<TableStruct>::template GetSqlTypeString<type>();
     }
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
@@ -166,9 +127,7 @@ template <typename TableType, auto... MemberPointer> struct Table : public detai
     }
 };
 
-template <typename TableType> struct Table<TableType> : public detail::TableBase<TableType> {
-    Table(const TableType tableType) : detail::TableBase<TableType>(tableType) {}
-    Table(TableType* const tableType = nullptr) : detail::TableBase<TableType>(tableType) {}
+template <typename TableStruct> struct Table<TableStruct> final : public detail::TableBase<TableStruct> {
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenName() {
         using namespace std::string_view_literals;
@@ -178,17 +137,16 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
         return detail::StaticString<>("column_"sv) + UnsignedToStringView(Index).to_string_view();
     }
 
-    static consteval unsigned GetColumnCount() { return boost::pfr::tuple_size_v<TableType>; }
+    static consteval unsigned GetColumnCount() { return boost::pfr::tuple_size_v<TableStruct>; }
 
-    template <unsigned Index> std::string getSqlValueString() const {
-        const TableType& self = *(this->operator->());
-        const auto& value = boost::pfr::get<Index>(self);
-        return detail::TableBase<TableType>::GetSqlValueString(value);
+    template <unsigned Index> static std::string GetSqlValueStringFromIndex(const TableStruct& tableStruct) {
+        const auto& value = boost::pfr::get<Index>(tableStruct);
+        return detail::TableBase<TableStruct>::GetSqlValueString(value);
     }
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenTypeString() {
-        using type = decltype(boost::pfr::get<Index>(TableType()));
-        return detail::TableBase<TableType>::template GetSqlTypeString<type>();
+        using type = decltype(boost::pfr::get<Index>(TableStruct()));
+        return detail::TableBase<TableStruct>::template GetSqlTypeString<type>();
     }
 
     template <unsigned Index> static consteval detail::StaticString<> GetColumenNameAndType() {
@@ -210,4 +168,13 @@ template <typename TableType> struct Table<TableType> : public detail::TableBase
     }
 };
 
-} // namespace sql_cpp
+template <typename TalbeStruct, bool allColumns = has_type_sql_cpp_column_list_type<TalbeStruct>::value> struct TableTypeSelector;
+
+template <typename TableStruct> struct TableTypeSelector<TableStruct, false> { using type = Table<TableStruct>; };
+template <typename TableStruct> struct TableTypeSelector<TableStruct, true> {
+    using type = TableStruct::sql_cpp_column_list_type::table_type;
+};
+
+template <typename TableStruct> using TableTypeSelector_t = typename TableTypeSelector<TableStruct>::type;
+
+} // namespace sql_cpp::detail
