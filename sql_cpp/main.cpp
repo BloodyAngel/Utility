@@ -1,13 +1,6 @@
-#include "sql_cpp/column_list.hpp"
-#include <type_traits>
-
-#include "sql_cpp/detail/static_string.hpp"
 #include "sql_cpp/sql_cpp.hpp"
-
-#include "sql_cpp/detail/create_table.hpp"
-#include "sql_cpp/detail/static_string.hpp"
-#include "sql_cpp/detail/table.hpp"
 #include "sql_cpp/operators.hpp"
+#include "sql_cpp/column_list.hpp"
 
 struct Person {
     uint8_t age = 0;
