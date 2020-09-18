@@ -32,7 +32,7 @@ template <typename TableStruct> struct TableBase {
             return SqlType::integer;
         else if constexpr (std::is_floating_point_v<TypeBase>)
             return SqlType::real;
-        else if constexpr (IsTemplateOf_v<TypeBase, std::basic_string>)
+        else if constexpr (std::is_convertible_v<TypeBase, std::string>)
             return SqlType::text;
         else
             return SqlType::blob;

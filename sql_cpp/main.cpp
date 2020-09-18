@@ -18,7 +18,7 @@ int main() {
     test::CheckConsistency();
 
     std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
-    std::cout << sql_cpp::in(&Person::age, 1, 2).to_string() << std::endl;
+    std::cout << sql_cpp::in(&Person::name, "hans", "peter").to_string() << std::endl;
 
     sql_cpp::SqlCpp sql;
     sql.createTable<Person>();
