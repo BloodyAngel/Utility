@@ -17,6 +17,8 @@ int main() {
     using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
     test::CheckConsistency();
 
+    std::cout << (sql_cpp::comparison(&Person::name) == "peter").to_string() << std::endl;
+
     std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
     std::cout << sql_cpp::in(&Person::name, "hans", "peter").to_string() << std::endl;
 

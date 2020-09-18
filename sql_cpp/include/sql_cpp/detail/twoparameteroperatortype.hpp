@@ -180,4 +180,31 @@ HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(
 
 #undef HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION
 
+template <typename ValueType, typename TableStruct> class Comparison {
+  public:
+    constexpr Comparison(ValueType TableStruct::*ptr) : m_Ptr(ptr) {}
+
+#define HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(Operator, funcName)     \
+    template <typename T> auto operator Operator(T&& rhs) {                    \
+        return funcName(std::move(m_Ptr), std::forward<T>(rhs));               \
+    }
+
+    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(==, equal_to)
+    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(<, less)
+    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(<=, less_equal)
+    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(>, greater)
+    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(>=, greater_equal)
+
+#undef HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER
+
+  private:
+    ValueType TableStruct::*m_Ptr;
+};
+
+// consistency towards function style and support for compileres without CTAD
+template <typename ValueType, typename TableStruct>
+auto comparison(ValueType TableStruct::*ptr) {
+    return Comparison<ValueType, TableStruct>(ptr);
+};
+
 } // namespace sql_cpp
