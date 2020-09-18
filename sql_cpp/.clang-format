@@ -7,4 +7,4 @@ PointerBindsToType: true
 BreakBeforeBraces: Attach
 BreakConstructorInitializersBeforeComma: false
 IndentWidth: 4
-ColumnLimit: 128
+ColumnLimit: 80

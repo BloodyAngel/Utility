@@ -1,9 +1,13 @@
 #include "sql_cpp/column_list.hpp"
+#include <type_traits>
+
+#include "sql_cpp/detail/static_string.hpp"
 #include "sql_cpp/sql_cpp.hpp"
 
 #include "sql_cpp/detail/create_table.hpp"
 #include "sql_cpp/detail/static_string.hpp"
 #include "sql_cpp/detail/table.hpp"
+#include "sql_cpp/operators.hpp"
 
 struct Person {
     uint8_t age = 0;
@@ -17,9 +21,11 @@ struct Person2 {
 };
 
 int main() {
-
     using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
     test::CheckConsistency();
+
+    std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
+    std::cout << sql_cpp::in(&Person::age, 1, 2).to_string() << std::endl;
 
     sql_cpp::SqlCpp sql;
     sql.createTable<Person>();
