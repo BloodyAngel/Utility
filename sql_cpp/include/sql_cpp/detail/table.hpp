@@ -251,7 +251,7 @@ template <typename TableStruct> struct TableTypeSelector<TableStruct, false> {
     using type = Table<TableStruct>;
 };
 template <typename TableStruct> struct TableTypeSelector<TableStruct, true> {
-    using type = TableStruct::sql_cpp_column_list_type::table_type;
+    using type = typename TableStruct::sql_cpp_column_list_type::table_type;
 };
 
 template <typename TableStruct>
