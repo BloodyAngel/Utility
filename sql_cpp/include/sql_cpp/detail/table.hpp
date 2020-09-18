@@ -174,19 +174,25 @@ struct Table<TableStruct> final : public TableBase<TableStruct> {
     template <typename T>
     static detail::StaticString<>
         GetColumenName(T TableStruct::*MemberObjectPointer) {
+
+        // constructor call not used and space inefficient... but required...
         static TableStruct tableStruct;
-        unsigned index(-1);
-        unsigned currentIndex = 0;
+
+        using T_ValueType = std::decay_t<T>;
         const auto MemberPtr = &(tableStruct.*MemberObjectPointer);
 
-        auto searchFunc = [MemberPtr, &index, &currentIndex](auto& element) {
+        unsigned index(-1);
+        unsigned currentIndex = 0;
+        auto searchFunc = [&MemberPtr, &index, &currentIndex](auto& element) {
             using ValueType = std::decay_t<decltype(element)>;
-            if constexpr (std::is_same_v<ValueType, T>) {
+            if constexpr (std::is_same_v<ValueType, T_ValueType>) {
                 if (MemberPtr == &element)
                     index = currentIndex;
             }
             ++currentIndex;
         };
+
+        // binary search is theoretical faster, but not yet used :)
         boost::pfr::for_each_field(tableStruct, searchFunc);
         if (index >= GetColumnCount())
             throw std::runtime_error("MemberPointer out of range");

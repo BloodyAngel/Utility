@@ -180,31 +180,107 @@ HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(
 
 #undef HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION
 
-template <typename ValueType, typename TableStruct> class Comparison {
-  public:
-    constexpr Comparison(ValueType TableStruct::*ptr) : m_Ptr(ptr) {}
+namespace detail {
 
-#define HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(Operator, funcName)     \
+template <typename ValueType, typename TableStruct> class OperatorOverloadBase {
+  public:
+    constexpr OperatorOverloadBase(ValueType TableStruct::*ptr) : m_Ptr(ptr) {}
+
+  protected:
+    const ValueType TableStruct::*m_Ptr;
+};
+
+#define HELPER_MACRO_CREATE_OPERATOR_MEMBER(Operator, funcName)                \
     template <typename T> auto operator Operator(T&& rhs) const {              \
-        return funcName(m_Ptr, std::forward<T>(rhs));                          \
+        return funcName(this->m_Ptr, std::forward<T>(rhs));                    \
     }
 
-    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(==, equal_to)
-    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(<, less)
-    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(<=, less_equal)
-    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(>, greater)
-    HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(>=, greater_equal)
-
-#undef HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER
-
-  private:
-    ValueType TableStruct::*m_Ptr;
-};
-
-// consistency towards function style and support for compileres without CTAD
 template <typename ValueType, typename TableStruct>
-auto comparison(ValueType TableStruct::*ptr) {
-    return Comparison<ValueType, TableStruct>(ptr);
+class Comparison : public OperatorOverloadBase<ValueType, TableStruct> {
+  public:
+    constexpr Comparison(ValueType TableStruct::*ptr)
+        : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
+
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(==, equal_to)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(<, less)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(<=, less_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(>, greater)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(>=, greater_equal)
 };
+
+template <typename ValueType, typename TableStruct>
+class Arithmetic : public OperatorOverloadBase<ValueType, TableStruct> {
+  public:
+    constexpr Arithmetic(ValueType TableStruct::*ptr)
+        : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
+
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(+, plus)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(-, minus)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(*, multiplies)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(/, divides)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(%, modulus)
+};
+
+template <typename ValueType, typename TableStruct>
+class Bitwise : public OperatorOverloadBase<ValueType, TableStruct> {
+  public:
+    constexpr Bitwise(ValueType TableStruct::*ptr)
+        : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
+
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(&, bit_and)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(|, bit_or)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(^, bit_xor)
+};
+
+template <typename ValueType, typename TableStruct>
+class Compound : public OperatorOverloadBase<ValueType, TableStruct> {
+  public:
+    constexpr Compound(ValueType TableStruct::*ptr)
+        : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
+
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(+=, plus_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(-=, minus_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(*=, multiplies_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(/=, divides_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(%=, modulus_equal)
+
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(&=, bit_and_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(|=, bit_or_equal)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(^=, bit_xor_equal)
+};
+
+#undef HELPER_MACRO_CREATE_OPERATOR_MEMBER
+
+/**
+ * 'public virtual' seem to have bigger size than just raw inheritance
+ */
+template <typename ValueType, typename TableStruct>
+class AllOperators : public Comparison<ValueType, TableStruct>,
+                     public Arithmetic<ValueType, TableStruct>,
+                     public Bitwise<ValueType, TableStruct>,
+                     public Compound<ValueType, TableStruct> {
+  public:
+    constexpr AllOperators(ValueType TableStruct::*ptr)
+        : Comparison<ValueType, TableStruct>(ptr),
+          Arithmetic<ValueType, TableStruct>(ptr),
+          Bitwise<ValueType, TableStruct>(ptr),
+          Compound<ValueType, TableStruct>(ptr) {}
+};
+
+} // namespace detail
+
+#define HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(funcName, ClassName)         \
+    template <typename ValueType, typename TableStruct>                        \
+    auto funcName(ValueType TableStruct::*ptr) {                               \
+        return detail::ClassName<ValueType, TableStruct>(ptr);                 \
+    }
+
+HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(arithmetic, Arithmetic)
+HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(bitwise, Bitwise)
+HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(comparison, Comparison)
+HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(compound, Compound)
+HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(operators, AllOperators)
+
+#undef HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION
 
 } // namespace sql_cpp

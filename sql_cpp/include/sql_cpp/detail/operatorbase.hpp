@@ -63,7 +63,7 @@ template <OperatorType TypeOfOperator> struct SqlOperatorBase {
         using RawType = std::decay_t<T>;
 
         /// TODO: maybe add support for wstring
-        if constexpr (std::is_member_object_pointer_v<T>) {
+        if constexpr (std::is_member_object_pointer_v<RawType>) {
             using ClassType =
                 decltype(TypeToRequiredClassType_ExtractClassHelper(value));
 
