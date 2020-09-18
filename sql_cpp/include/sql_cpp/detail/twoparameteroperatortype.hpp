@@ -185,8 +185,8 @@ template <typename ValueType, typename TableStruct> class Comparison {
     constexpr Comparison(ValueType TableStruct::*ptr) : m_Ptr(ptr) {}
 
 #define HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(Operator, funcName)     \
-    template <typename T> auto operator Operator(T&& rhs) {                    \
-        return funcName(std::move(m_Ptr), std::forward<T>(rhs));               \
+    template <typename T> auto operator Operator(T&& rhs) const {              \
+        return funcName(m_Ptr, std::forward<T>(rhs));                          \
     }
 
     HELPER_MACRO_CREATE_COMPARISON_OPERATOR_MEMBER(==, equal_to)
