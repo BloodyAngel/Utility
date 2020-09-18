@@ -43,7 +43,8 @@ static constexpr auto Generate_InsertTableString(FwdIter begin, Sentinal end) {
     const auto valueStrings = std::accumulate(begin, end, std::string(), [](const auto& current, const auto& tableType) {
         return current + ", (" + Generate_InsertTableString_CreateAllColumnValues<TableType>(tableType) + ')';
     });
-    return baseString.to_string() + valueStrings + ';';
+    auto&& subStr = valueStrings.substr(1); // first ',' is not allowed
+    return baseString.to_string() + std::move(subStr) + ';';
 }
 
 } // namespace sql_cpp::detail
