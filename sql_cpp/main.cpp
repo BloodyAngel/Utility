@@ -19,7 +19,8 @@ int main() {
     test::CheckConsistency();
 
     const auto PersonName = sql_cpp::comparison(&Person::name);
-    std::cout << (PersonName == "peter").to_string()
+    std::cout << (PersonName == "peter").to_string() << std::endl;
+    std::cout << (sql_cpp::operators(&Person::age) == 2).to_string()
               << std::endl;
 
     std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;

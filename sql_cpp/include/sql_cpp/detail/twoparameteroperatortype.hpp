@@ -191,8 +191,11 @@ template <typename ValueType, typename TableStruct> class OperatorOverloadBase {
 };
 
 #define HELPER_MACRO_CREATE_OPERATOR_MEMBER(Operator, funcName)                \
-    template <typename T> auto operator Operator(T&& rhs) const {              \
-        return funcName(this->m_Ptr, std::forward<T>(rhs));                    \
+    auto operator Operator(ValueType&& rhs) const {                            \
+        return funcName(this->m_Ptr, std::move(rhs));                          \
+    }                                                                          \
+    auto operator Operator(const ValueType& rhs) const {                       \
+        return funcName(this->m_Ptr, rhs);                                     \
     }
 
 template <typename ValueType, typename TableStruct>
