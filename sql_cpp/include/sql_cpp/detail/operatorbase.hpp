@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "sql_cpp/detail/util.hpp"
 #include "sql_cpp/detail/table.hpp"
+#include "sql_cpp/detail/util.hpp"
 
 namespace sql_cpp::detail {
 
@@ -79,5 +79,69 @@ template <OperatorType TypeOfOperator> struct SqlOperatorBase {
             throw std::runtime_error("Invalid Parametertype");
     }
 };
+
+class MultiComparisonSqlOperator
+    : public SqlOperatorBase<OperatorType::comparison> {
+
+  public:
+    MultiComparisonSqlOperator(SqlOperatorBase&& sob0, SqlOperatorBase&& sob1,
+                               std::string_view operatorString)
+        : m_RequiredClassTypes(CreateRequiredClassTypeVector(sob0, sob1)),
+          m_Command(CreateCommandString(std::move(sob0), std::move(sob1),
+                                        operatorString)) {}
+
+    const std::vector<RequiredClassType>&
+        requiredClassTypes() const noexcept override {
+        return m_RequiredClassTypes;
+    }
+
+    std::string&& to_string() && noexcept override {
+        return std::move(m_Command);
+    }
+
+  private:
+    static std::vector<detail::RequiredClassType>
+        CreateRequiredClassTypeVector(const SqlOperatorBase& sob0,
+                                      const SqlOperatorBase& sob1) {
+        auto result = sob0.requiredClassTypes();
+        const auto& vec1 = sob1.requiredClassTypes();
+        result.insert(result.end(), vec1.cbegin(), vec1.cend());
+        return result;
+    }
+    static std::string CreateCommandString(SqlOperatorBase&& sob0,
+                                           SqlOperatorBase&& sob1,
+                                           std::string_view operatorString) {
+        std::string&& operatorWithSpaces =
+            ' ' + std::string(operatorString) + ' ';
+
+        return std::move(sob0).to_string() + std::move(operatorWithSpaces) +
+               std::move(sob1).to_string();
+    }
+
+  private:
+    // order matters!
+    const std::vector<detail::RequiredClassType> m_RequiredClassTypes;
+    std::string m_Command;
+};
+
+template <OperatorType OT> static consteval void CheckOrAndAllowed() {
+    static_assert(OT == OperatorType::comparison || OT == OperatorType::logical,
+                  "Only logical or comparison types may use || or &&");
+}
+
+template <OperatorType OT_LHS, OperatorType OT_RHS>
+auto operator&&(SqlOperatorBase<OT_LHS>&& sob0,
+                SqlOperatorBase<OT_RHS>&& sob1) {
+    CheckOrAndAllowed<OT_LHS>();
+    CheckOrAndAllowed<OT_RHS>();
+    return MultiComparisonSqlOperator(std::move(sob0), std::move(sob1), "AND");
+}
+template <OperatorType OT_LHS, OperatorType OT_RHS>
+auto operator||(SqlOperatorBase<OT_LHS>&& sob0,
+                SqlOperatorBase<OT_RHS>&& sob1) {
+    CheckOrAndAllowed<OT_LHS>();
+    CheckOrAndAllowed<OT_RHS>();
+    return MultiComparisonSqlOperator(std::move(sob0), std::move(sob1), "OR");
+}
 
 } // namespace sql_cpp::detail

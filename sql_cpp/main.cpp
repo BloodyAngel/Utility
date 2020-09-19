@@ -18,9 +18,14 @@ int main() {
     using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
     test::CheckConsistency();
 
+    std::cout << (sql_cpp::operators(&Person::age) == 1 &&
+                  sql_cpp::operators(&Person::name) == "peter")
+                     .to_string()
+              << std::endl;
+
     const auto PersonName = sql_cpp::comparison(&Person::name);
     std::cout << (PersonName == "peter").to_string() << std::endl;
-    std::cout << (sql_cpp::operators(&Person::age) == 2).to_string()
+    std::cout << (sql_cpp::operators(&Person::age) != 2).to_string()
               << std::endl;
 
     std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
