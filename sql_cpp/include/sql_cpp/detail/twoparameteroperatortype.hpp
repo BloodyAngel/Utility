@@ -196,11 +196,19 @@ template <typename ValueType, typename TableStruct> class OperatorOverloadBase {
     }                                                                          \
     auto operator Operator(const ValueType& rhs) const {                       \
         return funcName(this->m_Ptr, rhs);                                     \
+    }                                                                          \
+    friend auto operator Operator(ValueType&& lhs, const self_type& self) {    \
+        return funcName(std::move(lhs), self.m_Ptr);                           \
+    }                                                                          \
+    friend auto operator Operator(const ValueType& lhs,                        \
+                                  const self_type& self) {                     \
+        return funcName(lhs, self.m_Ptr);                                      \
     }
 
 template <typename ValueType, typename TableStruct>
 class Comparison : public OperatorOverloadBase<ValueType, TableStruct> {
   public:
+    using self_type = Comparison;
     constexpr Comparison(ValueType TableStruct::*ptr)
         : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
 
@@ -215,6 +223,7 @@ class Comparison : public OperatorOverloadBase<ValueType, TableStruct> {
 template <typename ValueType, typename TableStruct>
 class Arithmetic : public OperatorOverloadBase<ValueType, TableStruct> {
   public:
+    using self_type = Arithmetic;
     constexpr Arithmetic(ValueType TableStruct::*ptr)
         : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
 
@@ -228,6 +237,7 @@ class Arithmetic : public OperatorOverloadBase<ValueType, TableStruct> {
 template <typename ValueType, typename TableStruct>
 class Bitwise : public OperatorOverloadBase<ValueType, TableStruct> {
   public:
+    using self_type = Bitwise;
     constexpr Bitwise(ValueType TableStruct::*ptr)
         : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
 
@@ -239,6 +249,7 @@ class Bitwise : public OperatorOverloadBase<ValueType, TableStruct> {
 template <typename ValueType, typename TableStruct>
 class Compound : public OperatorOverloadBase<ValueType, TableStruct> {
   public:
+    using self_type = Compound;
     constexpr Compound(ValueType TableStruct::*ptr)
         : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
 

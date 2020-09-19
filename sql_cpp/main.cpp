@@ -28,6 +28,8 @@ int main() {
     std::cout << (sql_cpp::operators(&Person::age) != 2).to_string()
               << std::endl;
 
+    std::cout << (2 == sql_cpp::operators(&Person2::age)).to_string() << std::endl;
+
     std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
     std::cout << sql_cpp::in(&Person::name, "hans", "peter").to_string()
               << std::endl;
