@@ -74,7 +74,7 @@ template <OperatorType TypeOfOperator> struct SqlOperatorBase {
         } else if constexpr (std::is_arithmetic_v<RawType>)
             return std::to_string(std::forward<T>(value));
         else if constexpr (std::is_convertible_v<RawType, std::string>)
-            return std::forward<T>(value);
+            return '\'' + std::forward<T>(value) + '\'';
         else
             throw std::runtime_error("Invalid Parametertype");
     }
