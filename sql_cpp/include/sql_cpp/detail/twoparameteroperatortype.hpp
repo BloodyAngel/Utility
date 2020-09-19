@@ -205,6 +205,7 @@ class Comparison : public OperatorOverloadBase<ValueType, TableStruct> {
         : OperatorOverloadBase<ValueType, TableStruct>(ptr) {}
 
     HELPER_MACRO_CREATE_OPERATOR_MEMBER(==, equal_to)
+    HELPER_MACRO_CREATE_OPERATOR_MEMBER(!=, not_equal_to)
     HELPER_MACRO_CREATE_OPERATOR_MEMBER(<, less)
     HELPER_MACRO_CREATE_OPERATOR_MEMBER(<=, less_equal)
     HELPER_MACRO_CREATE_OPERATOR_MEMBER(>, greater)
