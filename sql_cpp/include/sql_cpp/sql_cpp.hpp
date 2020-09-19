@@ -17,6 +17,8 @@
 namespace sql_cpp {
 
 struct SqlCpp {
+    using WHERE_CLAUSE =
+        detail::SqlOperatorBase<detail::OperatorType::comparison>;
 
     template <typename TableStruct> void drop_table();
     template <typename TableStruct> void create_table();
@@ -26,9 +28,9 @@ struct SqlCpp {
               typename TableStruct_FwdIter_Sentinal>
     void insert(TableStruct_FwdIter begin, TableStruct_FwdIter_Sentinal end);
 
-    template <typename TableStruct>
-    void delete_from(
-        detail::SqlOperatorBase<detail::OperatorType::comparison>&& where);
+    template <typename TableStruct> void delete_from(WHERE_CLAUSE&& where);
+
+    template <typename TableStruct> void select_from(WHERE_CLAUSE&& where);
 
   private:
 };
@@ -59,9 +61,7 @@ void SqlCpp::insert(TableStruct_FwdIter begin,
     std::cout << sqlString << std::endl;
 }
 
-template <typename TableStruct>
-void SqlCpp::delete_from(
-    detail::SqlOperatorBase<detail::OperatorType::comparison>&& where) {
+template <typename TableStruct> void SqlCpp::delete_from(WHERE_CLAUSE&& where) {
     using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString =
         detail::Generate_DeleteFromString<TableType>(std::move(where));
