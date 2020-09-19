@@ -18,7 +18,7 @@ int main() {
     using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
     test::CheckConsistency();
 
-    std::cout << (sql_cpp::operators(&Person::age) == 1 &&
+    std::cout << (not(sql_cpp::operators(&Person::age) == 1) &&
                   sql_cpp::operators(&Person::name) == "peter")
                      .to_string()
               << std::endl;

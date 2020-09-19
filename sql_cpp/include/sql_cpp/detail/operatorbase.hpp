@@ -80,12 +80,20 @@ template <OperatorType TypeOfOperator> struct SqlOperatorBase {
     }
 };
 
-class MultiComparisonSqlOperator
+class ComparisonSqlOperatorHelper
     : public SqlOperatorBase<OperatorType::comparison> {
 
   public:
-    MultiComparisonSqlOperator(SqlOperatorBase&& sob0, SqlOperatorBase&& sob1,
-                               std::string_view operatorString)
+    template <OperatorType OT>
+    ComparisonSqlOperatorHelper(SqlOperatorBase<OT>&& sob, bool addNotInFront)
+        : m_RequiredClassTypes(sob.requiredClassTypes()),
+          m_Command((addNotInFront ? std::string("NOT ") : "") +
+                    std::move(sob).to_string()) {}
+
+    template <OperatorType OT_LHS, OperatorType OT_RHS>
+    ComparisonSqlOperatorHelper(SqlOperatorBase<OT_LHS>&& sob0,
+                                SqlOperatorBase<OT_RHS>&& sob1,
+                                std::string_view operatorString)
         : m_RequiredClassTypes(CreateRequiredClassTypeVector(sob0, sob1)),
           m_Command(CreateCommandString(std::move(sob0), std::move(sob1),
                                         operatorString)) {}
@@ -100,16 +108,18 @@ class MultiComparisonSqlOperator
     }
 
   private:
+    template <OperatorType OT_LHS, OperatorType OT_RHS>
     static std::vector<detail::RequiredClassType>
-        CreateRequiredClassTypeVector(const SqlOperatorBase& sob0,
-                                      const SqlOperatorBase& sob1) {
+        CreateRequiredClassTypeVector(const SqlOperatorBase<OT_LHS>& sob0,
+                                      const SqlOperatorBase<OT_RHS>& sob1) {
         auto result = sob0.requiredClassTypes();
         const auto& vec1 = sob1.requiredClassTypes();
         result.insert(result.end(), vec1.cbegin(), vec1.cend());
         return result;
     }
-    static std::string CreateCommandString(SqlOperatorBase&& sob0,
-                                           SqlOperatorBase&& sob1,
+    template <OperatorType OT_LHS, OperatorType OT_RHS>
+    static std::string CreateCommandString(SqlOperatorBase<OT_LHS>&& sob0,
+                                           SqlOperatorBase<OT_RHS>&& sob1,
                                            std::string_view operatorString) {
         std::string&& operatorWithSpaces =
             ' ' + std::string(operatorString) + ' ';
@@ -126,7 +136,7 @@ class MultiComparisonSqlOperator
 
 template <OperatorType OT> static consteval void CheckOrAndAllowed() {
     static_assert(OT == OperatorType::comparison || OT == OperatorType::logical,
-                  "Only logical or comparison types may use || or &&");
+                  "Only logical or comparison types may use ! or || or &&");
 }
 
 template <OperatorType OT_LHS, OperatorType OT_RHS>
@@ -134,14 +144,17 @@ auto operator&&(SqlOperatorBase<OT_LHS>&& sob0,
                 SqlOperatorBase<OT_RHS>&& sob1) {
     CheckOrAndAllowed<OT_LHS>();
     CheckOrAndAllowed<OT_RHS>();
-    return MultiComparisonSqlOperator(std::move(sob0), std::move(sob1), "AND");
+    return ComparisonSqlOperatorHelper(std::move(sob0), std::move(sob1), "AND");
 }
 template <OperatorType OT_LHS, OperatorType OT_RHS>
 auto operator||(SqlOperatorBase<OT_LHS>&& sob0,
                 SqlOperatorBase<OT_RHS>&& sob1) {
     CheckOrAndAllowed<OT_LHS>();
     CheckOrAndAllowed<OT_RHS>();
-    return MultiComparisonSqlOperator(std::move(sob0), std::move(sob1), "OR");
+    return ComparisonSqlOperatorHelper(std::move(sob0), std::move(sob1), "OR");
+}
+template <OperatorType OT> auto operator!(SqlOperatorBase<OT>&& sob) {
+    return ComparisonSqlOperatorHelper(std::move(sob), true);
 }
 
 } // namespace sql_cpp::detail
