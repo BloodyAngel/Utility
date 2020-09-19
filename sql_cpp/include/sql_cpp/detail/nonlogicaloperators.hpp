@@ -48,34 +48,34 @@ static constexpr std::string_view
     // clang-format off
     switch (tpot) {
     // arithmetic types
-    case NonLogicalOperatorType::ADD: return "+";
-    case NonLogicalOperatorType::SUBTRACT: return "-";
-    case NonLogicalOperatorType::MULTIPLY: return "*";
-    case NonLogicalOperatorType::DIVIDE: return "/";
-    case NonLogicalOperatorType::MODULO: return "%";
+    case NonLogicalOperatorType::ADD: return " + ";
+    case NonLogicalOperatorType::SUBTRACT: return " - ";
+    case NonLogicalOperatorType::MULTIPLY: return " * ";
+    case NonLogicalOperatorType::DIVIDE: return " / ";
+    case NonLogicalOperatorType::MODULO: return " % ";
 
     // bitwise types
-    case NonLogicalOperatorType::BITWISE_AND: return "&";
-    case NonLogicalOperatorType::BITWISE_OR: return "|";
-    case NonLogicalOperatorType::BITWISE_XOR: return "^";
+    case NonLogicalOperatorType::BITWISE_AND: return " & ";
+    case NonLogicalOperatorType::BITWISE_OR: return " | ";
+    case NonLogicalOperatorType::BITWISE_XOR: return " ^ ";
 
     // comparison types
-    case NonLogicalOperatorType::EQUAL_TO: return "=";
-    case NonLogicalOperatorType::GREATER_EQUAL: return ">=";
-    case NonLogicalOperatorType::GREATER_THAN: return ">";
-    case NonLogicalOperatorType::LESS_EQUAL: return "<=";
-    case NonLogicalOperatorType::LESS_THAN: return "<";
-    case NonLogicalOperatorType::NOT_EQUAL: return "<>";
+    case NonLogicalOperatorType::EQUAL_TO: return " = ";
+    case NonLogicalOperatorType::GREATER_EQUAL: return " >= ";
+    case NonLogicalOperatorType::GREATER_THAN: return " > ";
+    case NonLogicalOperatorType::LESS_EQUAL: return " <= ";
+    case NonLogicalOperatorType::LESS_THAN: return " < ";
+    case NonLogicalOperatorType::NOT_EQUAL: return " <> ";
 
     // compound types
-    case NonLogicalOperatorType::ADD_EQUAL: return "&=";
-    case NonLogicalOperatorType::SUBTRACT_EQUAL: return "-=";
-    case NonLogicalOperatorType::MULTIPLY_EQUAL: return "*=";
-    case NonLogicalOperatorType::DIVIDE_EQUAL: return "/=";
-    case NonLogicalOperatorType::MODULO_EQUAL: return "%=";
-    case NonLogicalOperatorType::BITWISE_AND_EQUAL: return "&=";
-    case NonLogicalOperatorType::BITWISE_OR_EQUAL: return "|*=";
-    case NonLogicalOperatorType::BITWISE_XOR_EQUAL: return "^-=";
+    case NonLogicalOperatorType::ADD_EQUAL: return " &= ";
+    case NonLogicalOperatorType::SUBTRACT_EQUAL: return " -= ";
+    case NonLogicalOperatorType::MULTIPLY_EQUAL: return " *= ";
+    case NonLogicalOperatorType::DIVIDE_EQUAL: return " /= ";
+    case NonLogicalOperatorType::MODULO_EQUAL: return " %= ";
+    case NonLogicalOperatorType::BITWISE_AND_EQUAL: return " &= ";
+    case NonLogicalOperatorType::BITWISE_OR_EQUAL: return " |*= ";
+    case NonLogicalOperatorType::BITWISE_XOR_EQUAL: return " ^-= ";
     }
     // clang-format on
     throw std::runtime_error("Invalid Comparison String");
