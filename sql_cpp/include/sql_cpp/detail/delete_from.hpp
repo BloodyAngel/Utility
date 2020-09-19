@@ -9,7 +9,7 @@ static auto Generate_DeleteFromString(
     SqlOperatorBase<OperatorType::comparison>&& where) {
 
     /// TODO: check only correct type is required
-    return "delete from " + TableType::GetTableName().to_string() + " WHERE " +
+    return "DELETE FROM " + TableType::GetTableName().to_string() + " WHERE " +
            std::move(where).to_string() + ';';
 }
 

@@ -37,8 +37,8 @@ template <typename TableType, typename FwdIter, typename Sentinal>
 static constexpr auto Generate_InsertTableString(FwdIter begin, Sentinal end) {
 
     using namespace std::string_view_literals;
-    constexpr auto baseString = StaticString<>() + "insert into "sv + TableType::GetTableName().to_string_view() + "("sv +
-                                Generate_InsertTableString_CreateAllColumnNames<TableType>().to_string_view() + ") values"sv;
+    constexpr auto baseString = StaticString<>() + "INSERT INTO "sv + TableType::GetTableName().to_string_view() + "("sv +
+                                Generate_InsertTableString_CreateAllColumnNames<TableType>().to_string_view() + ") VALUES"sv;
 
     const auto valueStrings = std::accumulate(begin, end, std::string(), [](const auto& current, const auto& tableType) {
         return current + ", (" + Generate_InsertTableString_CreateAllColumnValues<TableType>(tableType) + ')';

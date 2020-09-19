@@ -19,7 +19,7 @@ static consteval auto Generate_CreateTableString_CreateAllColumnNamesAndTypes() 
 }
 template <typename TableType> static consteval auto Generate_CreateTableString() {
     using namespace std::string_view_literals;
-    constexpr auto CommandStart = StaticString<>("create table "sv) + (TableType::GetTableName() + "("sv).to_string_view();
+    constexpr auto CommandStart = StaticString<>("CREATE TABLE "sv) + (TableType::GetTableName() + "("sv).to_string_view();
     constexpr auto CommandParameter = Generate_CreateTableString_CreateAllColumnNamesAndTypes<TableType>();
     constexpr auto CommandEnd = ");"sv;
 
