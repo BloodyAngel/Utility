@@ -190,10 +190,12 @@ struct Table final : public TableBase<TableStruct> {
 template <typename TableStruct>
 struct Table<TableStruct> final : public TableBase<TableStruct> {
 
+    static constexpr inline std::string_view ColumnStartName = "column";
+
     static constexpr auto CreateColumnNameFromIndex(unsigned index) {
         using namespace std::string_view_literals;
         const auto unsignedString = UnsignedToStringView(index);
-        return detail::StaticString<>("column_"sv) +
+        return detail::StaticString<>(ColumnStartName) +
                unsignedString.to_string_view();
     }
 
@@ -231,7 +233,7 @@ struct Table<TableStruct> final : public TableBase<TableStruct> {
         if (Index >= GetColumnCount())
             throw std::out_of_range("index out of range");
 
-        return StaticString<>("column_"sv) +
+        return StaticString<>(ColumnStartName) +
                UnsignedToStringView(Index).to_string_view();
     }
 

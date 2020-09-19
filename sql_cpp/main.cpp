@@ -21,7 +21,6 @@ int main() {
     test::CheckConsistency();
 
     std::cout << sql_cpp::order_by<&Person::age, &Person::name>().to_string() << std::endl;
-
     std::cout << (not(sql_cpp::operators(&Person::age) == 1) &&
                   sql_cpp::operators(&Person::name) == "peter")
                      .to_string()
@@ -42,6 +41,9 @@ int main() {
 
     sql_cpp::SqlCpp sql;
     sql.create_table<Person>();
+    sql.select_from<Person>();
+    sql.select_from<Person>(sql_cpp::order_by<&Person::age>());
+    sql.select_from<Person>(sql_cpp::operators(&Person::age) < 1);
     sql.insert(Person());
     sql.delete_from<Person>(sql_cpp::operators(&Person::age) < 100);
 
