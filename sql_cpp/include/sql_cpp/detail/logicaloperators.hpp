@@ -105,4 +105,6 @@ auto in(Value&& value, Args&&... args) {
                               std::forward<Args>(args)...);
 }
 
+/// TODO: add 'in' function with container
+
 } // namespace sql_cpp

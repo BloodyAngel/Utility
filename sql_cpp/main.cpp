@@ -35,22 +35,23 @@ int main() {
               << std::endl;
 
     sql_cpp::SqlCpp sql;
-    sql.createTable<Person>();
+    sql.create_table<Person>();
     sql.insert(Person());
+    sql.delete_from<Person>(sql_cpp::operators(&Person::age) < 100);
 
     std::array<Person, 4> people;
     std::fill(people.begin(), people.end(), Person());
     sql.insert(people.cbegin(), people.cend());
-    sql.dropTable<Person>();
+    sql.drop_table<Person>();
 
     std::cout << std::endl;
 
-    sql.createTable<Person2>();
+    sql.create_table<Person2>();
     sql.insert(Person2());
     std::array<Person2, 4> people2;
     std::fill(people2.begin(), people2.end(), Person2());
     sql.insert(people2.cbegin(), people2.cend());
-    sql.dropTable<Person2>();
+    sql.drop_table<Person2>();
 
     std::cout << std::endl;
 
