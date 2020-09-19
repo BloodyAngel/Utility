@@ -113,7 +113,7 @@ struct Table final : public TableBase<TableStruct> {
             throw std::runtime_error(
                 "MemberObjectPointer not part of ColumsList!");
         }
-        return detail::GetMemberName<MemberObjectPointer>();
+        return GetMemberPointerName(MemberObjectPointer);
     }
 
     static consteval unsigned GetColumnCount() {
@@ -142,6 +142,32 @@ struct Table final : public TableBase<TableStruct> {
     }
 
   private:
+    template <typename T, unsigned Index, auto FrontPtr, auto... OtherPtr>
+    static constexpr StaticString<>
+        GetMemberPointerName_Helper(T TableStruct::*ptr) {
+        using Decay_T = std::decay_t<T>;
+        using Decay_Front =
+            std::decay_t<typename MemberPointerTraits<FrontPtr>::value_type>;
+
+        if constexpr (std::is_same_v<Decay_T, Decay_Front>) {
+            if (ptr == FrontPtr)
+                return GetMemberName<FrontPtr>();
+        }
+        if constexpr (sizeof...(OtherPtr))
+            return GetMemberPointerName_Helper<T, Index + 1, OtherPtr...>(ptr);
+        else
+            throw std::runtime_error("member pointer not in column list!");
+    }
+
+    template <typename T>
+    static constexpr StaticString<> GetMemberPointerName(T TableStruct::*ptr) {
+        return GetMemberPointerName_Helper<T, 0, MemberPointer...>(ptr);
+    }
+    template <typename T>
+    static constexpr bool CheckMemberPointerExists(T TableStruct::*ptr) {
+        return GetMemberPointerName(ptr).size() > 0;
+    }
+
     template <unsigned Index> static consteval auto GetMemberPointer() {
         constexpr auto tuple = std::make_tuple(MemberPointer...);
         return std::get<Index>(tuple);

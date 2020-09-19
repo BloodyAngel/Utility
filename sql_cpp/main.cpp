@@ -2,6 +2,8 @@
 #include "sql_cpp/operators.hpp"
 #include "sql_cpp/sql_cpp.hpp"
 
+#include "sql_cpp/order_by.hpp"
+
 struct Person {
     uint8_t age = 0;
     std::string name = "hans";
@@ -18,13 +20,17 @@ int main() {
     using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
     test::CheckConsistency();
 
+    std::cout << sql_cpp::order_by<&Person::age, &Person::name>().to_string() << std::endl;
+
     std::cout << (not(sql_cpp::operators(&Person::age) == 1) &&
                   sql_cpp::operators(&Person::name) == "peter")
                      .to_string()
               << std::endl;
 
     const auto PersonName = sql_cpp::comparison(&Person::name);
+    const auto PersonName2 = sql_cpp::comparison(&Person2::name);
     std::cout << (PersonName == "peter").to_string() << std::endl;
+    std::cout << (PersonName2 == "peter").to_string() << std::endl;
     std::cout << (sql_cpp::operators(&Person::age) != 2).to_string()
               << std::endl;
 

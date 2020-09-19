@@ -67,7 +67,7 @@ template <OperatorType TypeOfOperator> struct SqlOperatorBase {
             using ClassType =
                 decltype(TypeToRequiredClassType_ExtractClassHelper(value));
 
-            using TCT = Table<ClassType>;
+            using TCT = TableTypeSelector_t<ClassType>;
             return TCT::GetTableName().to_string() + '.' +
                    TCT::GetColumenName(value).to_string();
 
