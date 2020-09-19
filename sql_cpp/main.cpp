@@ -17,27 +17,6 @@ struct Person2 {
 };
 
 int main() {
-    using test = sql_cpp::ColumnList<&Person::age, &Person::name>;
-    test::CheckConsistency();
-
-    std::cout << sql_cpp::order_by<&Person::age, &Person::name>().to_string() << std::endl;
-    std::cout << (not(sql_cpp::operators(&Person::age) == 1) &&
-                  sql_cpp::operators(&Person::name) == "peter")
-                     .to_string()
-              << std::endl;
-
-    const auto PersonName = sql_cpp::comparison(&Person::name);
-    const auto PersonName2 = sql_cpp::comparison(&Person2::name);
-    std::cout << (PersonName == "peter").to_string() << std::endl;
-    std::cout << (PersonName2 == "peter").to_string() << std::endl;
-    std::cout << (sql_cpp::operators(&Person::age) != 2).to_string()
-              << std::endl;
-
-    std::cout << (2 == sql_cpp::operators(&Person2::age)).to_string() << std::endl;
-
-    std::cout << sql_cpp::between(&Person::age, 1, 2).to_string() << std::endl;
-    std::cout << sql_cpp::in(&Person::name, "hans", "peter").to_string()
-              << std::endl;
 
     sql_cpp::SqlCpp sql;
     sql.create_table<Person>();
