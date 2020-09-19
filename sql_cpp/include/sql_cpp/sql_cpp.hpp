@@ -36,23 +36,30 @@ struct SqlCpp {
     template <typename TableStruct> void delete_from(WHERE_CLAUSE&& where);
 
     template <typename TableStruct,
-              template <typename> typename ContainerType = std::vector>
-    ContainerType<TableStruct> select_from();
+              template <typename, typename>
+              typename ContainerType = std::vector,
+              typename Allocator = std::allocator<TableStruct>>
+    ContainerType<TableStruct, Allocator> select_from();
 
     template <typename TableStruct,
-              template <typename> typename ContainerType = std::vector>
-    ContainerType<TableStruct> select_from(WHERE_CLAUSE&& where);
+              template <typename, typename>
+              typename ContainerType = std::vector,
+              typename Allocator = std::allocator<TableStruct>>
+    ContainerType<TableStruct, Allocator> select_from(WHERE_CLAUSE&& where);
 
-    template <typename TableStruct,
-              template <typename> typename ContainerType = std::vector,
-              auto... MemberPtr>
-    ContainerType<TableStruct> select_from(ORDER_BY<MemberPtr...>&& orderby);
+    template <
+        typename TableStruct,
+        template <typename, typename> typename ContainerType = std::vector,
+        typename Allocator = std::allocator<TableStruct>, auto... MemberPtr>
+    ContainerType<TableStruct, Allocator>
+        select_from(ORDER_BY<MemberPtr...>&& orderby);
 
-    template <typename TableStruct,
-              template <typename> typename ContainerType = std::vector,
-              auto... MemberPtr>
-    ContainerType<TableStruct> select_from(WHERE_CLAUSE&& where,
-                                           ORDER_BY<MemberPtr...>&& orderby);
+    template <
+        typename TableStruct,
+        template <typename, typename> typename ContainerType = std::vector,
+        typename Alocator = std::allocator<TableStruct>, auto... MemberPtr>
+    ContainerType<TableStruct, Alocator>
+        select_from(WHERE_CLAUSE&& where, ORDER_BY<MemberPtr...>&& orderby);
 
   private:
 };
@@ -91,16 +98,21 @@ template <typename TableStruct> void SqlCpp::delete_from(WHERE_CLAUSE&& where) {
     std::cout << sqlString << std::endl;
 }
 
-template <typename TableStruct, template <typename> typename ContainerType>
-ContainerType<TableStruct> SqlCpp::select_from() {
+template <typename TableStruct,
+          template <typename, typename> typename ContainerType,
+          typename Allocator>
+ContainerType<TableStruct, Allocator> SqlCpp::select_from() {
     using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString = detail::Generate_SelectAllFromString<TableType>();
     std::cout << sqlString << std::endl;
     return {};
 }
 
-template <typename TableStruct, template <typename> typename ContainerType>
-ContainerType<TableStruct> SqlCpp::select_from(WHERE_CLAUSE&& where) {
+template <typename TableStruct,
+          template <typename, typename> typename ContainerType,
+          typename Allocator>
+ContainerType<TableStruct, Allocator>
+    SqlCpp::select_from(WHERE_CLAUSE&& where) {
     using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString =
         detail::Generate_SelectAllFromString<TableType>(std::move(where));
@@ -108,9 +120,10 @@ ContainerType<TableStruct> SqlCpp::select_from(WHERE_CLAUSE&& where) {
     return {};
 }
 
-template <typename TableStruct, template <typename> typename ContainerType,
-          auto... MemberPtr>
-ContainerType<TableStruct>
+template <typename TableStruct,
+          template <typename, typename> typename ContainerType,
+          typename Allocator, auto... MemberPtr>
+ContainerType<TableStruct, Allocator>
     SqlCpp::select_from(ORDER_BY<MemberPtr...>&& orderby) {
     using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString =
@@ -119,9 +132,10 @@ ContainerType<TableStruct>
     return {};
 }
 
-template <typename TableStruct, template <typename> typename ContainerType,
-          auto... MemberPtr>
-ContainerType<TableStruct>
+template <typename TableStruct,
+          template <typename, typename> typename ContainerType,
+          typename Allocator, auto... MemberPtr>
+ContainerType<TableStruct, Allocator>
     SqlCpp::select_from(WHERE_CLAUSE&& where,
                         ORDER_BY<MemberPtr...>&& orderby) {
     using TableType = detail::TableTypeSelector_t<TableStruct>;
