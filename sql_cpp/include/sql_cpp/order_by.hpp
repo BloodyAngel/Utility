@@ -36,7 +36,7 @@ template <auto FirstMemberPtr, auto... OtherMemberPtr> class OrderBy {
     }
 
     static std::string CreateCommand(Order order) {
-        const char* orderStr = order == Order::ASC ? " ASC" : "DESC";
+        const char* orderStr = order == Order::ASC ? " ASC" : " DESC";
         return "ORDER BY " +
                CreateMemberListCommand<FirstMemberPtr, OtherMemberPtr...>() +
                orderStr;

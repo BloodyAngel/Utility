@@ -285,7 +285,7 @@ class AllOperators : public Comparison<ValueType, TableStruct>,
 
 #define HELPER_MACRO_CREATE_SQL_OPERATOR_FUNCTION(funcName, ClassName)         \
     template <typename ValueType, typename TableStruct>                        \
-    auto funcName(ValueType TableStruct::*ptr) {                               \
+    constexpr auto funcName(ValueType TableStruct::*ptr) {                     \
         return detail::ClassName<ValueType, TableStruct>(ptr);                 \
     }
 
