@@ -15,9 +15,6 @@
 #include "sql_cpp/detail/where_clause.hpp"
 #include "sql_cpp/order_by.hpp"
 
-#include <sqlite3.h>
-#include <vector>
-
 namespace sql_cpp {
 
 struct SqlCpp {
@@ -35,31 +32,54 @@ struct SqlCpp {
 
     template <typename TableStruct> void delete_from(WHERE_CLAUSE&& where);
 
-    template <typename TableStruct,
+    template <typename TableStructOrColumnList,
               template <typename, typename>
               typename ContainerType = std::vector,
-              typename Allocator = std::allocator<TableStruct>>
-    ContainerType<TableStruct, Allocator> select_from();
+              typename Allocator = std::allocator<TableStructOrColumnList>>
+    ContainerType<TableStructOrColumnList, Allocator> select_from();
 
-    template <typename TableStruct,
+    template <auto... MemberPtr> auto select_from() {
+        return select_from<sql_cpp::ColumnList<MemberPtr...>>();
+    }
+
+    template <typename TableStructOrColumnList,
               template <typename, typename>
               typename ContainerType = std::vector,
-              typename Allocator = std::allocator<TableStruct>>
-    ContainerType<TableStruct, Allocator> select_from(WHERE_CLAUSE&& where);
+              typename Allocator = std::allocator<TableStructOrColumnList>>
+    ContainerType<TableStructOrColumnList, Allocator>
+        select_from(WHERE_CLAUSE&& where);
 
-    template <
-        typename TableStruct,
-        template <typename, typename> typename ContainerType = std::vector,
-        typename Allocator = std::allocator<TableStruct>, auto... MemberPtr>
-    ContainerType<TableStruct, Allocator>
+    template <auto... MemberPtr> auto select_from(WHERE_CLAUSE&& where) {
+        return select_from<sql_cpp::ColumnList<MemberPtr...>>(std::move(where));
+    }
+
+    template <typename TableStructOrColumnList,
+              template <typename, typename>
+              typename ContainerType = std::vector,
+              typename Allocator = std::allocator<TableStructOrColumnList>,
+              auto... MemberPtr>
+    ContainerType<TableStructOrColumnList, Allocator>
         select_from(ORDER_BY<MemberPtr...>&& orderby);
 
-    template <
-        typename TableStruct,
-        template <typename, typename> typename ContainerType = std::vector,
-        typename Alocator = std::allocator<TableStruct>, auto... MemberPtr>
-    ContainerType<TableStruct, Alocator>
+    template <auto... MemberPtr, auto... MemberPtr2>
+    auto select_from(ORDER_BY<MemberPtr2...>&& orderby) {
+        return select_from<sql_cpp::ColumnList<MemberPtr...>>(
+            std::move(orderby));
+    }
+
+    template <typename TableStructOrColumnList,
+              template <typename, typename>
+              typename ContainerType = std::vector,
+              typename Alocator = std::allocator<TableStructOrColumnList>,
+              auto... MemberPtr>
+    ContainerType<TableStructOrColumnList, Alocator>
         select_from(WHERE_CLAUSE&& where, ORDER_BY<MemberPtr...>&& orderby);
+
+    template <auto... MemberPtr, auto... MemberPtr2>
+    auto select_from(WHERE_CLAUSE&& where, ORDER_BY<MemberPtr2...>&& orderby) {
+        return select_from<sql_cpp::ColumnList<MemberPtr...>>(
+            std::move(where), std::move(orderby));
+    }
 
   private:
 };
@@ -98,49 +118,49 @@ template <typename TableStruct> void SqlCpp::delete_from(WHERE_CLAUSE&& where) {
     std::cout << sqlString << std::endl;
 }
 
-template <typename TableStruct,
+template <typename TableStructOrColumnList,
           template <typename, typename> typename ContainerType,
           typename Allocator>
-ContainerType<TableStruct, Allocator> SqlCpp::select_from() {
-    using TableType = detail::TableTypeSelector_t<TableStruct>;
-    const auto sqlString = detail::Generate_SelectAllFromString<TableType>();
+ContainerType<TableStructOrColumnList, Allocator> SqlCpp::select_from() {
+    const auto sqlString =
+        detail::Generate_SelectFromString<TableStructOrColumnList>();
     std::cout << sqlString << std::endl;
     return {};
 }
 
-template <typename TableStruct,
+template <typename TableStructOrColumnList,
           template <typename, typename> typename ContainerType,
           typename Allocator>
-ContainerType<TableStruct, Allocator>
+ContainerType<TableStructOrColumnList, Allocator>
     SqlCpp::select_from(WHERE_CLAUSE&& where) {
-    using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString =
-        detail::Generate_SelectAllFromString<TableType>(std::move(where));
+        detail::Generate_SelectFromString<TableStructOrColumnList>(
+            std::move(where));
     std::cout << sqlString << std::endl;
     return {};
 }
 
-template <typename TableStruct,
+template <typename TableStructOrColumnList,
           template <typename, typename> typename ContainerType,
           typename Allocator, auto... MemberPtr>
-ContainerType<TableStruct, Allocator>
+ContainerType<TableStructOrColumnList, Allocator>
     SqlCpp::select_from(ORDER_BY<MemberPtr...>&& orderby) {
-    using TableType = detail::TableTypeSelector_t<TableStruct>;
     const auto sqlString =
-        detail::Generate_SelectAllFromString<TableType>(std::move(orderby));
+        detail::Generate_SelectFromString<TableStructOrColumnList>(
+            std::move(orderby));
     std::cout << sqlString << std::endl;
     return {};
 }
 
-template <typename TableStruct,
+template <typename TableStructOrColumnList,
           template <typename, typename> typename ContainerType,
           typename Allocator, auto... MemberPtr>
-ContainerType<TableStruct, Allocator>
+ContainerType<TableStructOrColumnList, Allocator>
     SqlCpp::select_from(WHERE_CLAUSE&& where,
                         ORDER_BY<MemberPtr...>&& orderby) {
-    using TableType = detail::TableTypeSelector_t<TableStruct>;
-    const auto sqlString = detail::Generate_SelectAllFromString<TableType>(
-        std::move(where), std::move(orderby));
+    const auto sqlString =
+        detail::Generate_SelectFromString<TableStructOrColumnList>(
+            std::move(where), std::move(orderby));
     std::cout << sqlString << std::endl;
     return {};
 }

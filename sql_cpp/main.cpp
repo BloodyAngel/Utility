@@ -21,8 +21,16 @@ int main() {
     sql_cpp::SqlCpp sql;
     sql.create_table<Person>();
     sql.select_from<Person>();
+    sql.select_from<sql_cpp::ColumnList<&Person::age>>();
+    sql.select_from<&Person2::age>();
     sql.select_from<Person>(sql_cpp::order_by<&Person::age>());
     sql.select_from<Person>(sql_cpp::operators(&Person::age) < 1);
+
+    static constexpr auto PersonAge = sql_cpp::operators(&Person::age);
+    sql.select_from<&Person::age>(
+        PersonAge < 100 && PersonAge >= 17,
+        sql_cpp::order_by<&Person::age>(sql_cpp::Order::DESC));
+
     sql.insert(Person());
     sql.delete_from<Person>(sql_cpp::operators(&Person::age) < 100);
 
